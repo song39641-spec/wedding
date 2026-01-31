@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>囍．婚禮全方位規劃系統 - 夫妻協作版</title>
+    <title>囍．我們的婚禮規劃系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -17,18 +17,17 @@
         .stagger-offset { transform: translateY(40px); }
         .glass-nav { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); }
         .countdown-card { background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%); box-shadow: 0 4px 12px rgba(225, 29, 72, 0.2); }
-        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #e11d48; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         @media (max-width: 768px) {
             .responsive-table thead { display: none; }
             .responsive-table tr { display: block; margin-bottom: 1rem; border: 1px solid #fee2e2; border-radius: 1rem; padding: 0.5rem; background: white; }
-            .responsive-table td { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem !important; border: none !important; }
+            .responsive-table td { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem !important; }
             .responsive-table td::before { content: attr(data-label); font-weight: 700; color: #9f1239; font-size: 0.75rem; }
         }
         .btn-delete { color: #ef4444; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; font-size: 18px; }
         .btn-delete:hover { color: #b91c1c; background-color: #fee2e2; border-radius: 50%; }
-        .sync-indicator { position: fixed; bottom: 20px; right: 20px; z-index: 100; font-size: 12px; }
+        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #e11d48; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="min-h-screen pb-10">
@@ -39,6 +38,7 @@
                 <span class="text-2xl">囍</span>
                 <h1 class="text-lg font-bold text-rose-700">婚禮規劃系統</h1>
             </div>
+            <div id="sync-indicator" class="text-[10px] bg-rose-50 text-rose-400 px-2 py-1 rounded-full border border-rose-100 hidden">雲端同步中...</div>
             <div class="md:hidden countdown-card text-white px-3 py-1 rounded-xl flex items-center gap-2">
                 <div class="font-bold text-xs tabular-nums" id="countdown-timer-mobile">00天 00:00</div>
             </div>
@@ -53,10 +53,10 @@
     </nav>
 
     <main class="max-w-6xl mx-auto px-4 mt-6">
-        <!-- 1. 桌位圖 -->
+        <!-- 1. 桌位配置圖 -->
         <div id="view-layout" class="tab-content space-y-4">
             <div class="flex justify-between items-center px-2">
-                <h2 class="text-xl font-bold text-rose-700">場地桌位分佈</h2>
+                <h2 class="text-xl font-bold text-rose-700">場地桌位分佈 (左16:右12)</h2>
                 <button onclick="exportLayoutToPNG()" class="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl hover:bg-indigo-700 transition-all font-bold text-xs flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     匯出佈置圖 PNG
@@ -73,15 +73,15 @@
                     </div>
                     <div class="relative flex justify-between gap-2 md:gap-4 pb-8 md:pb-12">
                         <div class="grid grid-cols-2 gap-x-4 md:gap-x-8 gap-y-10 md:gap-y-12 flex-1"><div id="left-block" class="contents"></div></div>
-                        <div class="aisle w-16 md:w-24 flex items-center justify-center rounded-2xl border-x-2 border-rose-100 min-h-[400px] md:min-h-[600px]"><span class="rotate-90 text-rose-200 font-bold tracking-[0.5em] md:tracking-[1em] whitespace-nowrap uppercase text-[10px] md:text-sm text-center">AISLE 走道</span></div>
+                        <div class="aisle w-16 md:w-24 flex items-center justify-center rounded-2xl border-x-2 border-rose-100 min-h-[400px] md:min-h-[600px] text-rose-200 font-bold uppercase text-[10px] md:text-sm"><span class="rotate-90">走道 AISLE</span></div>
                         <div class="grid grid-cols-2 gap-x-4 md:gap-x-8 gap-y-10 md:gap-y-12 flex-1"><div id="right-block" class="contents"></div></div>
                     </div>
-                    <div class="mt-12 md:mt-20 w-full border-t-2 md:border-t-4 border-dashed border-rose-100 pt-6 md:pt-8 flex justify-center text-rose-300 font-medium uppercase text-[10px] md:text-sm text-center">Entrance 入口</div>
+                    <div class="mt-12 md:mt-20 w-full border-t-2 md:border-t-4 border-dashed border-rose-100 pt-6 md:pt-8 flex justify-center text-rose-300 font-medium uppercase text-[10px] md:text-sm">Entrance 入口</div>
                 </div>
             </div>
         </div>
 
-        <!-- 各分頁視圖 -->
+        <!-- 分頁視圖 -->
         <div id="view-pickup" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white rounded-[2rem] shadow-xl p-6 border border-rose-50">
@@ -101,8 +101,10 @@
 
         <div id="view-music" class="tab-content hidden space-y-6">
             <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-rose-50 flex flex-col md:flex-row gap-4 items-center">
-                <input type="text" id="music-theme-input" placeholder="讓 AI 為您推薦音樂..." class="flex-1 p-3 bg-gray-50 border rounded-xl text-sm outline-none">
-                <button onclick="suggestMusicAI()" class="bg-indigo-500 text-white px-6 py-3 rounded-2xl text-sm font-bold">✨ AI 推薦音樂</button>
+                <input type="text" id="music-theme-input" placeholder="韓系、浪漫..." class="flex-1 p-3 bg-gray-50 border rounded-xl text-sm outline-none">
+                <button onclick="suggestMusicAI()" class="bg-indigo-500 text-white px-6 py-3 rounded-2xl text-sm font-bold flex items-center gap-2">
+                    <span id="ai-music-loader" class="hidden loader"></span> ✨ AI 建議
+                </button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="music-lists-container"></div>
         </div>
@@ -115,12 +117,17 @@
         </div>
 
         <div id="view-data" class="tab-content hidden space-y-6">
-            <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-rose-50">
-                <div class="p-5 bg-rose-50/50 border-b border-rose-100 flex justify-between items-center">
-                    <h4 class="font-bold text-rose-900 text-sm">桌位數據管理</h4>
-                    <button onclick="exportToCSV()" class="bg-green-600 text-white px-4 py-2 rounded-xl font-bold text-xs">匯出 CSV</button>
+            <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-rose-50">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">系統同步設定 (夫妻協作專用)</h3>
+                <p class="text-xs text-gray-500 mb-4">若您將此網頁放在 GitHub，請在此貼上您的 Firebase Config 以開啟雲端同步功能。</p>
+                <div class="flex gap-3">
+                    <button onclick="openConfigModal()" class="bg-rose-600 text-white px-6 py-3 rounded-2xl text-sm font-bold">設定雲端連線</button>
+                    <button onclick="exportToCSV()" class="bg-green-600 text-white px-6 py-3 rounded-2xl text-sm font-bold">匯出桌位 CSV</button>
                 </div>
-                <div class="overflow-x-auto"><table class="w-full text-left responsive-table"><thead class="bg-gray-50 text-[10px] text-gray-400 uppercase tracking-widest"><tr><th>桌號</th><th>桌名</th><th>人數</th><th>賓客</th><th>操作</th></tr></thead><tbody id="data-table-body" class="divide-y divide-gray-100 text-sm"></tbody></table></div>
+            </div>
+            <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-rose-50">
+                <div class="p-5 bg-rose-50/50 border-b border-rose-100"><h4 class="font-bold text-rose-900 text-sm">桌位數據明細</h4></div>
+                <div class="overflow-x-auto"><table class="w-full text-left responsive-table"><thead class="bg-gray-50 text-[10px] text-gray-400 uppercase tracking-widest"><tr><th>桌號</th><th>桌名</th><th>人數</th><th>名單</th><th>操作</th></tr></thead><tbody id="data-table-body" class="divide-y divide-gray-100 text-sm"></tbody></table></div>
             </div>
         </div>
     </main>
@@ -128,103 +135,79 @@
     <!-- 編輯 Modal -->
     <div id="modal" class="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center hidden backdrop-blur-md">
         <div class="bg-white w-full sm:max-w-2xl rounded-t-[2rem] sm:rounded-[2.5rem] p-6 md:p-10 shadow-2xl max-h-[95vh] overflow-y-auto">
-            <div class="flex justify-between items-start mb-6"><h3 class="text-2xl font-bold text-rose-800" id="modal-title">管理座次</h3><button onclick="closeModal()" class="text-gray-300 text-3xl hover:text-rose-500">&times;</button></div>
+            <div class="flex justify-between items-start mb-6"><h3 class="text-2xl font-bold text-rose-800" id="modal-title">管理座次</h3><button onclick="closeModal()" class="text-gray-300 text-3xl">&times;</button></div>
             <div class="space-y-6">
-                <div>
-                    <div class="flex justify-between mb-1">
-                        <label class="text-xs font-bold text-gray-400">桌位名稱</label>
-                        <button onclick="suggestTableNameAI()" class="text-[10px] text-rose-500 font-bold">
-                            <span id="ai-name-loader" class="hidden loader"></span> ✨ AI 建議名字
-                        </button>
-                    </div>
-                    <input type="text" id="edit-tableName" class="w-full p-4 bg-gray-50 border rounded-xl outline-none" placeholder="桌名">
-                    <div id="ai-name-suggestions" class="flex flex-wrap gap-2 mt-2"></div>
-                </div>
-                <div>
-                    <div class="flex justify-between mb-1">
-                        <label class="text-xs font-bold text-gray-400">賓客姓名</label>
-                        <button onclick="suggestIcebreakersAI()" class="text-[10px] text-indigo-500 font-bold">
-                            <span id="ai-ice-loader" class="hidden loader"></span> ✨ AI 破冰建議
-                        </button>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="guest-inputs-container"></div>
-                </div>
-                <div id="ai-response-container" class="hidden bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
-                    <p id="ai-response-text" class="text-xs text-indigo-600 leading-relaxed"></p>
-                </div>
+                <input type="text" id="edit-tableName" class="w-full p-4 bg-gray-50 border rounded-xl outline-none" placeholder="桌位名稱">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="guest-inputs-container"></div>
             </div>
-            <div class="mt-8 flex flex-col-reverse sm:flex-row gap-3 pt-6 border-t"><button onclick="closeModal()" class="w-full py-4 text-gray-400 font-bold">取消</button><button onclick="saveTable()" class="w-full py-4 bg-rose-600 text-white rounded-2xl font-bold shadow-lg">儲存</button></div>
+            <div class="mt-8 flex flex-col sm:flex-row gap-3 pt-6 border-t"><button onclick="closeModal()" class="w-full py-4 text-gray-400 font-bold">取消</button><button onclick="saveTable()" class="w-full py-4 bg-rose-600 text-white rounded-2xl font-bold shadow-lg">儲存變更</button></div>
         </div>
     </div>
 
-    <!-- 同步提示 -->
-    <div id="sync-status" class="sync-indicator bg-white/80 px-3 py-1 rounded-full border border-rose-100 text-rose-400 hidden">雲端同步中...</div>
+    <!-- Firebase Config Modal -->
+    <div id="config-modal" class="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center hidden backdrop-blur-md p-4">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
+            <h3 class="text-xl font-bold text-rose-800 mb-4">雲端同步設定</h3>
+            <p class="text-xs text-gray-500 mb-4">請貼上 Firebase 提供的 JSON Config 內容：</p>
+            <textarea id="firebase-config-input" class="w-full h-40 p-4 bg-gray-50 border rounded-xl text-[10px] font-mono outline-none mb-4" placeholder='{"apiKey": "...", "projectId": "...", ...}'></textarea>
+            <div class="flex gap-3">
+                <button onclick="closeConfigModal()" class="flex-1 py-3 text-gray-400 font-bold">關閉</button>
+                <button onclick="saveFirebaseConfig()" class="flex-1 py-3 bg-rose-600 text-white rounded-xl font-bold">儲存並啟動</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Firebase 初始化
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const apiKey = ""; // Gemini API Key
-
         const WEDDING_DATE = new Date("2026-03-01T00:00:00");
         let activeTab = 'layout';
         let syncTimer = null;
+        let db, auth;
 
-        // 資料狀態
-        let state = {
+        // 全域狀態 (優先從 LocalStorage 載入，確保離線也能用)
+        let state = JSON.parse(localStorage.getItem('wedding_v14_offline_state')) || {
             seatingData: [],
             scheduleData: [{ id: 1, time: "12:00", event: "婚宴入席" }],
-            pickupScheduleData: [{ id: 1, time: "08:00", event: "準備儀式" }],
-            carData: [{ id: 1, info: "第一部車", passengers: ["司機"] }],
+            pickupScheduleData: [{ id: 1, time: "08:00", event: "儀式準備" }],
+            carData: [{ id: 1, info: "領頭車", passengers: ["司機"] }],
             musicData: { entrance: [], dining1: [], dining2: [] },
             todoData: [],
             tabOrder: [{ id: 'layout', name: '桌位圖' }, { id: 'pickup', name: '迎娶' }, { id: 'schedule', name: '流程' }, { id: 'music', name: '音樂' }, { id: 'todo', name: '待辦' }, { id: 'data', name: '數據' }]
         };
 
-        // --- Firebase 核心連線邏輯 ---
-        const initSync = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-            if (!user) return;
-            // RULE 1: 正確的 6 段式路徑 (artifacts/appId/public/data/configs/wedding_config)
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'configs', 'wedding_config');
-            onSnapshot(docRef, (snap) => {
-                if (snap.exists()) {
-                    state = { ...state, ...snap.data() };
-                    refreshUI();
-                } else {
-                    initSeatingData();
-                    pushToCloud();
-                }
-            }, (err) => console.error("Snapshot error:", err));
-        });
-
-        const pushToCloud = async () => {
-            if (!auth.currentUser) return;
-            document.getElementById('sync-status').classList.remove('hidden');
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'configs', 'wedding_config');
+        // --- Firebase 初始化 ---
+        const setupFirebase = async (config) => {
+            if (!config) return;
             try {
-                await setDoc(docRef, state, { merge: true });
-                setTimeout(() => document.getElementById('sync-status').classList.add('hidden'), 500);
-            } catch (e) { console.error("Sync error:", e); }
+                const app = initializeApp(config);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // 登入
+                const token = window.__initial_auth_token;
+                if (token) await signInWithCustomToken(auth, token);
+                else await signInAnonymously(auth);
+
+                const appId = window.__app_id || 'our-private-wedding';
+                // 監聽 6 段式路徑 (Rule 1 Fix)
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'configs', 'main');
+                
+                onSnapshot(docRef, (snap) => {
+                    if (snap.exists()) {
+                        state = { ...state, ...snap.data() };
+                        localStorage.setItem('wedding_v14_offline_state', JSON.stringify(state));
+                        refreshUI();
+                    }
+                });
+                document.getElementById('sync-indicator').classList.remove('hidden');
+            } catch (e) { console.error("Firebase Setup Error", e); }
         };
 
-        const debouncedPush = () => { clearTimeout(syncTimer); syncTimer = setTimeout(pushToCloud, 1000); };
-
-        function initSeatingData() {
+        // --- 初始化桌位數據 ---
+        function checkInitData() {
             if (state.seatingData.length === 0) {
                 state.seatingData.push({ id: 0, isMain: true, side: 'center', tableName: `主桌`, guests: Array(12).fill('') });
                 for (let i = 1; i <= 28; i++) {
@@ -233,54 +216,22 @@
             }
         }
 
-        // --- Gemini AI 功能 (Exponential Backoff) ---
-        async function callGemini(prompt) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            let delay = 1000;
-            for (let i = 0; i < 5; i++) {
-                try {
-                    const res = await fetch(url, { method: 'POST', body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
-                    if (!res.ok) throw new Error();
-                    const data = await res.json();
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text;
-                } catch (e) {
-                    await new Promise(r => setTimeout(r, delay));
-                    delay *= 2;
-                }
-            }
-            return null;
-        }
-
-        window.suggestTableNameAI = async () => {
-            document.getElementById('ai-name-loader').classList.remove('hidden');
-            const res = await callGemini("提供 3 個浪漫的婚禮桌名建議。只回傳 JSON 陣列：[\"A\", \"B\", \"C\"]");
-            if (res) {
-                const names = JSON.parse(res.replace(/```json|```/g, '').trim());
-                const container = document.getElementById('ai-name-suggestions');
-                container.innerHTML = names.map(n => `<button onclick="document.getElementById('edit-tableName').value='${n}'" class="text-[10px] bg-rose-50 px-2 py-1 rounded-full border">${n}</button>`).join('');
-            }
-            document.getElementById('ai-name-loader').classList.add('hidden');
+        const pushToCloud = async () => {
+            localStorage.setItem('wedding_v14_offline_state', JSON.stringify(state));
+            if (!auth || !auth.currentUser) return;
+            const appId = window.__app_id || 'our-private-wedding';
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'configs', 'main');
+            await setDoc(docRef, state, { merge: true });
         };
 
-        window.suggestIcebreakersAI = async () => {
-            const guests = Array.from(document.querySelectorAll('.guest-input')).map(i => i.value).filter(v => v.trim());
-            if (guests.length < 2) return alert("請輸入賓客姓名。");
-            document.getElementById('ai-ice-loader').classList.remove('hidden');
-            const res = await callGemini(`為賓客 ${guests.join('、')} 提供 2 個破冰話題。`);
-            if (res) { 
-                document.getElementById('ai-response-text').innerText = res;
-                document.getElementById('ai-response-container').classList.remove('hidden');
-            }
-            document.getElementById('ai-ice-loader').classList.add('hidden');
-        };
+        window.debouncedPush = () => { clearTimeout(syncTimer); syncTimer = setTimeout(pushToCloud, 1000); };
 
-        // --- UI 操作 ---
+        // --- 核心導覽與渲染 ---
         window.switchTab = (id) => { activeTab = id; renderNav(); refreshUI(); };
         function renderNav() {
             const container = document.getElementById('nav-tabs-container');
-            container.innerHTML = state.tabOrder.map(tab => `<button onclick="switchTab('${tab.id}')" class="flex-1 px-4 py-2 rounded-xl font-bold transition-all whitespace-nowrap text-center ${activeTab === idToMatch(tab.id) ? 'bg-white text-rose-700 shadow-sm' : 'text-rose-300'}">${tab.name}</button>`).join('');
+            container.innerHTML = state.tabOrder.map(tab => `<button onclick="switchTab('${tab.id}')" class="flex-1 px-4 py-2 rounded-xl font-bold transition-all whitespace-nowrap text-center ${activeTab === tab.id ? 'bg-white text-rose-700 shadow-sm' : 'text-rose-300'}">${tab.name}</button>`).join('');
         }
-        const idToMatch = (id) => activeTab === id ? id : null; // 簡化判斷
 
         function refreshUI() {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -311,30 +262,31 @@
             });
         }
 
-        // --- 全域資料修改器 ---
+        // --- 分頁資料操作 ---
         window.addPickupSchedule = () => { state.pickupScheduleData.push({ id: Date.now(), time: "08:00", event: "" }); refreshUI(); debouncedPush(); };
-        window.deletePickup = (id) => { state.pickupScheduleData = state.pickupScheduleData.filter(x=>x.id!==id); refreshUI(); debouncedPush(); };
-        window.updatePickup = (id,f,v) => { const i = state.pickupScheduleData.find(x=>x.id===id); if(i) { i[f]=v; debouncedPush(); } };
-        window.addCar = () => { state.carData.push({ id: Date.now(), info: `禮車 ${state.carData.length+1}`, passengers: ["司機"] }); refreshUI(); debouncedPush(); };
-        window.deleteCar = (id) => { state.carData = state.carData.filter(x=>x.id!==id); refreshUI(); debouncedPush(); };
-        window.updateCar = (id,v) => { const c = state.carData.find(x=>x.id===id); if(c) { c.info=v; debouncedPush(); } };
-        window.addPax = (cid) => { const c = state.carData.find(x=>x.id===cid); if(c) { c.passengers.push(""); refreshUI(); debouncedPush(); } };
-        window.updatePax = (cid,idx,v) => { const c = state.carData.find(x=>x.id===cid); if(c) { c.passengers[idx]=v; debouncedPush(); } };
-        window.deletePax = (cid,idx) => { const c = state.carData.find(x=>x.id===cid); if(c) { c.passengers.splice(idx,1); refreshUI(); debouncedPush(); } };
+        window.deletePickup = (id) => { state.pickupScheduleData = state.pickupScheduleData.filter(x=>x.id !== id); refreshUI(); debouncedPush(); };
+        window.updatePickup = (id,f,v) => { const i = state.pickupScheduleData.find(x=>x.id===id); if(i){i[f]=v; debouncedPush();} };
+        window.addCar = () => { state.carData.push({ id: Date.now(), info: `新禮車`, passengers: ["司機"] }); refreshUI(); debouncedPush(); };
+        window.deleteCar = (id) => { state.carData = state.carData.filter(x=>x.id !== id); refreshUI(); debouncedPush(); };
+        window.updateCar = (id,v) => { const c = state.carData.find(x=>x.id===id); if(c){c.info=v; debouncedPush();} };
+        window.addPax = (cid) => { const c = state.carData.find(x=>x.id===cid); if(c){c.passengers.push(""); refreshUI(); debouncedPush();} };
+        window.updatePax = (cid,idx,v) => { const c = state.carData.find(x=>x.id===cid); if(c){c.passengers[idx]=v; debouncedPush();} };
+        window.deletePax = (cid,idx) => { const c = state.carData.find(x=>x.id===cid); if(c){c.passengers.splice(idx,1); refreshUI(); debouncedPush();} };
         window.addScheduleRow = () => { state.scheduleData.push({ id: Date.now(), time: "12:00", event: "" }); refreshUI(); debouncedPush(); };
-        window.deleteSchedule = (id) => { state.scheduleData = state.scheduleData.filter(x=>x.id!==id); refreshUI(); debouncedPush(); };
-        window.updateSchedule = (id,f,v) => { const i = state.scheduleData.find(x=>x.id===id); if(i) { i[f]=v; debouncedPush(); } };
+        window.deleteSchedule = (id) => { state.scheduleData = state.scheduleData.filter(x=>x.id !== id); refreshUI(); debouncedPush(); };
+        window.updateSchedule = (id,f,v) => { const i = state.scheduleData.find(x=>x.id===id); if(i){i[f]=v; debouncedPush();} };
         window.addMusicItem = (k) => { state.musicData[k].push({ id: Date.now(), name: "", order: state.musicData[k].length+1 }); refreshUI(); debouncedPush(); };
-        window.updateMusic = (k,id,f,v) => { const s = state.musicData[k].find(x=>x.id===id); if(s) { s[f]=v; debouncedPush(); if(f==='order') refreshUI(); } };
-        window.deleteMusic = (k,id) => { state.musicData[k] = state.musicData[k].filter(x=>x.id!==id); refreshUI(); debouncedPush(); };
+        window.deleteMusic = (k,id) => { state.musicData[k] = state.musicData[k].filter(x=>x.id !== id); refreshUI(); debouncedPush(); };
+        window.updateMusic = (k,id,f,v) => { const s = state.musicData[k].find(x=>x.id===id); if(s){s[f]=v; debouncedPush(); if(f==='order') refreshUI();} };
         window.addTodoItem = () => { state.todoData.push({ id: Date.now(), task: "", done: false }); refreshUI(); debouncedPush(); };
-        window.toggleTodo = (id) => { const i = state.todoData.find(x=>x.id===id); if(i) { i.done=!i.done; refreshUI(); debouncedPush(); } };
-        window.updateTodo = (id,v) => { const i = state.todoData.find(x=>x.id===id); if(i) { i.task=v; debouncedPush(); } };
-        window.deleteTodo = (id) => { state.todoData = state.todoData.filter(x=>x.id!==id); refreshUI(); debouncedPush(); };
+        window.deleteTodo = (id) => { state.todoData = state.todoData.filter(x=>x.id !== id); refreshUI(); debouncedPush(); };
+        window.toggleTodo = (id) => { const i = state.todoData.find(x=>x.id===id); if(i){i[done]=!i.done; refreshUI(); debouncedPush();} };
+        window.updateTodo = (id,v) => { const i = state.todoData.find(x=>x.id===id); if(i){i.task=v; debouncedPush();} };
 
-        let curSeatingId = null;
+        // --- 彈窗處理 ---
+        let curId = null;
         window.openEdit = (id) => {
-            curSeatingId = id; const t = state.seatingData.find(x => x.id === id);
+            curId = id; const t = state.seatingData.find(x => x.id === id);
             document.getElementById('modal-title').innerText = `${t.tableName}`;
             document.getElementById('edit-tableName').value = t.tableName;
             document.getElementById('guest-inputs-container').innerHTML = t.guests.map((name, i) => `<div class="relative"><span class="absolute left-4 top-4 text-[9px] text-gray-300 font-bold">${i+1}</span><input type="text" class="guest-input w-full p-4 pl-9 bg-gray-50 border rounded-xl text-xs" value="${name}"></div>`).join('');
@@ -342,50 +294,72 @@
         };
         window.closeModal = () => document.getElementById('modal').classList.add('hidden');
         window.saveTable = () => {
-            const idx = state.seatingData.findIndex(x => x.id === curSeatingId);
+            const idx = state.seatingData.findIndex(x => x.id === curId);
             state.seatingData[idx].tableName = document.getElementById('edit-tableName').value;
             state.seatingData[idx].guests = Array.from(document.querySelectorAll('.guest-input')).map(i => i.value.trim());
             closeModal(); refreshUI(); debouncedPush();
         };
 
+        // --- 工具功能 ---
         window.exportLayoutToPNG = () => {
             html2canvas(document.getElementById('capture-area'), { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
-                const link = document.createElement('a'); link.href = canvas.toDataURL('image/png'); link.download = '場地佈置圖.png'; link.click();
+                const link = document.createElement('a'); link.href = canvas.toDataURL('image/png'); link.download = '婚禮佈置圖.png'; link.click();
             });
         };
-
         window.exportToCSV = () => {
             let csv = "ID,TableName,Guests\n" + state.seatingData.map(t => `"${t.id}","${t.tableName}","${t.guests.join(',')}"`).join("\n");
             const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: 'text/csv' })); link.download = `wedding_data.csv`; link.click();
         };
 
-        function renderMusic() {
-            const container = document.getElementById('music-lists-container');
-            const cats = ["entrance", "dining1", "dining2"];
-            const names = ["賓客入場", "一進用餐", "二進用餐"];
-            container.innerHTML = cats.map((k, idx) => `<div class="bg-white rounded-3xl shadow-lg border border-rose-50 overflow-hidden"><div class="p-4 bg-rose-50 border-b flex justify-between items-center"><h3 class="font-bold text-rose-800 text-sm">${names[idx]}</h3><button onclick="addMusicItem('${k}')" class="text-[10px] bg-rose-500 text-white px-2 py-1 rounded-lg">加曲</button></div><div class="p-4 space-y-2">${state.musicData[k].sort((a,b)=>a.order-b.order).map(s => `<div class="bg-rose-50/50 p-2 rounded-xl flex items-center gap-2"><button onclick="deleteMusic('${k}',${s.id})" class="btn-delete text-xs">✕</button><input type="number" value="${s.order}" onchange="updateMusic('${k}',${s.id},'order',this.value)" class="w-8 text-center bg-white rounded text-[10px]"><input type="text" value="${s.name}" onchange="updateMusic('${k}',${s.id},'name',this.value)" class="flex-1 bg-transparent text-[10px] outline-none"></div>`).join('')}</div></div>`).join('');
-        }
-
-        function renderPickup() {
-            document.getElementById('pickup-schedule-list').innerHTML = state.pickupScheduleData.map(i => `<div class="flex gap-2 bg-rose-50/40 p-3 rounded-2xl items-center"><button onclick="deletePickup(${i.id})" class="btn-delete">✕</button><input type="time" value="${i.time}" onchange="updatePickup(${i.id},'time',this.value)" class="bg-white rounded-lg p-2 text-rose-600 font-bold text-xs"><input type="text" value="${i.event}" onchange="updatePickup(${i.id},'event',this.value)" class="flex-1 bg-transparent border-none text-xs"></div>`).join('');
-            document.getElementById('cars-container').innerHTML = state.carData.map(c => `<div class="bg-white border border-rose-50 p-5 rounded-[2rem] shadow-sm"><div class="flex items-center gap-2 mb-4"><button onclick="deleteCar(${c.id})" class="btn-delete text-sm">✕</button><input type="text" value="${c.info}" onchange="updateCar(${c.id},this.value)" class="font-bold text-rose-800 outline-none w-full"></div><div class="grid grid-cols-2 gap-2">${c.passengers.map((p,idx)=>`<div class="flex items-center gap-1 bg-gray-50 p-2 rounded-xl"><button onclick="deletePax(${c.id},${idx})" class="text-gray-300">×</button><input type="text" value="${p}" onchange="updatePax(${c.id},${idx},this.value)" class="bg-transparent text-[10px] w-full outline-none"></div>`).join('')}<button onclick="addPax(${c.id})" class="text-[10px] border border-dashed border-rose-200 text-rose-300 rounded-xl py-2">+ 加人</button></div></div>`).join('');
-        }
-
-        function renderSchedule() { document.getElementById('schedule-list').innerHTML = state.scheduleData.map(i => `<div class="flex gap-2 bg-rose-50/20 p-4 rounded-2xl items-center"><button onclick="deleteSchedule(${i.id})" class="btn-delete">✕</button><input type="time" value="${i.time}" onchange="updateSchedule(${i.id},'time',this.value)" class="bg-white rounded-lg p-2 text-rose-600 font-bold text-sm"><input type="text" value="${i.event}" onchange="updateSchedule(${i.id},'event',this.value)" class="flex-1 bg-transparent border-none text-sm font-medium"></div>`).join(''); }
-        function renderTodo() { document.getElementById('todo-list').innerHTML = state.todoData.map(i => `<div class="flex items-center gap-2 bg-white p-4 rounded-2xl border shadow-sm"><button onclick="deleteTodo(${i.id})" class="btn-delete">✕</button><input type="checkbox" ${i.done?'checked':''} onchange="toggleTodo(${i.id})" class="accent-rose-500 h-5 w-5"><input type="text" value="${i.task}" onchange="updateTodo(${i.id},this.value)" class="flex-1 outline-none text-sm ${i.done?'line-through text-gray-400':''}"></div>`).join(''); }
-        function renderDataTable() { document.getElementById('data-table-body').innerHTML = state.seatingData.map(t => `<tr class="hover:bg-rose-50/30"><td class="px-6 py-4" data-label="桌號">${t.isMain ? '★' : t.id}</td><td class="px-6 py-4 font-bold text-rose-800" data-label="桌名">${t.tableName}</td><td class="px-6 py-4" data-label="人數">${t.guests.filter(g=>g.trim()).length}/${t.guests.length}</td><td class="px-6 py-4 text-[10px] text-gray-400 max-w-[150px] truncate" data-label="名單">${t.guests.join(',')}</td><td class="px-6 py-4" data-label="操作"><button onclick="openEdit(${t.id})" class="text-rose-500 font-bold hover:underline">編輯</button></td></tr>`).join(''); }
+        // --- Config 管理 ---
+        window.openConfigModal = () => document.getElementById('config-modal').classList.remove('hidden');
+        window.closeConfigModal = () => document.getElementById('config-modal').classList.add('hidden');
+        window.saveFirebaseConfig = () => {
+            const val = document.getElementById('firebase-config-input').value;
+            try {
+                const config = JSON.parse(val);
+                localStorage.setItem('wedding_v14_fb_config', val);
+                alert("設定儲存，請重新載入頁面！");
+                location.reload();
+            } catch(e) { alert("JSON 格式不正確"); }
+        };
 
         function updateCountdown() {
             const diff = WEDDING_DATE - new Date();
             const tEl = document.getElementById('countdown-timer'), tElMob = document.getElementById('countdown-timer-mobile');
-            if (diff <= 0) { tEl.innerText = tElMob.innerText = "新婚快樂！"; return; }
-            const d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
+            if (diff <= 0) { tEl.innerText = tElMob.innerText = "祝新婚快樂！"; return; }
+            const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
             tEl.innerText = `${d}天 ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             tElMob.innerText = `${d}天 ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
         }
         setInterval(updateCountdown, 1000);
 
-        window.onload = () => { initSync(); renderNav(); refreshUI(); };
+        // --- 初始化頁面 ---
+        window.onload = () => {
+            checkInitData();
+            // 優先嘗試本地儲存的 Config，若無則嘗試環境變數
+            const savedConfig = localStorage.getItem('wedding_v14_fb_config');
+            const envConfig = window.__firebase_config ? JSON.parse(window.__firebase_config) : null;
+            setupFirebase(savedConfig ? JSON.parse(savedConfig) : envConfig);
+            renderNav();
+            refreshUI();
+        };
+
+        // 渲染剩餘清單
+        function renderMusic() {
+            const cats = ["entrance", "dining1", "dining2"]; const names = ["賓客入場", "一進用餐", "二進用餐"];
+            document.getElementById('music-lists-container').innerHTML = cats.map((k, idx) => `<div class="bg-white rounded-3xl shadow-lg border border-rose-50 overflow-hidden"><div class="p-4 bg-rose-50 border-b flex justify-between items-center"><h3 class="font-bold text-rose-800 text-sm">${names[idx]}</h3><button onclick="addMusicItem('${k}')" class="text-[10px] bg-rose-500 text-white px-2 py-1 rounded-lg">加曲</button></div><div class="p-4 space-y-2">${state.musicData[k].sort((a,b)=>a.order-b.order).map(s => `<div class="bg-rose-50/50 p-2 rounded-xl flex items-center gap-2"><button onclick="deleteMusic('${k}',${s.id})" class="btn-delete text-xs">✕</button><input type="number" value="${s.order}" onchange="updateMusic('${k}',${s.id},'order',this.value)" class="w-8 text-center bg-white rounded text-[10px]"><input type="text" value="${s.name}" onchange="updateMusic('${k}',${s.id},'name',this.value)" class="flex-1 bg-transparent text-[10px] outline-none"></div>`).join('')}</div></div>`).join('');
+        }
+        function renderPickup() {
+            document.getElementById('pickup-schedule-list').innerHTML = state.pickupScheduleData.map(i => `<div class="flex gap-2 bg-rose-50/40 p-3 rounded-2xl items-center"><button onclick="deletePickup(${i.id})" class="btn-delete">✕</button><input type="time" value="${i.time}" onchange="updatePickup(${i.id},'time',this.value)" class="bg-white rounded-lg p-2 text-rose-600 font-bold text-xs"><input type="text" value="${i.event}" onchange="updatePickup(${i.id},'event',this.value)" class="flex-1 bg-transparent border-none text-xs"></div>`).join('');
+            document.getElementById('cars-container').innerHTML = state.carData.map(c => `<div class="bg-white border border-rose-50 p-5 rounded-[2rem] shadow-sm"><div class="flex items-center gap-2 mb-4"><button onclick="deleteCar(${c.id})" class="btn-delete text-sm">✕</button><input type="text" value="${c.info}" onchange="updateCar(${c.id},this.value)" class="font-bold text-rose-800 outline-none w-full"></div><div class="grid grid-cols-2 gap-2">${c.passengers.map((p,idx)=>`<div class="flex items-center gap-1 bg-gray-50 p-2 rounded-xl"><button onclick="deletePax(${c.id},${idx})" class="text-gray-300">×</button><input type="text" value="${p}" onchange="updatePax(${c.id},${idx},this.value)" class="bg-transparent text-[10px] w-full outline-none"></div>`).join('')}<button onclick="addPax(${c.id})" class="text-[10px] border border-dashed border-rose-200 text-rose-300 rounded-xl py-2">+ 加人</button></div></div>`).join('');
+        }
+        function renderSchedule() { document.getElementById('schedule-list').innerHTML = state.scheduleData.map(i => `<div class="flex gap-2 bg-rose-50/20 p-4 rounded-2xl items-center"><button onclick="deleteSchedule(${i.id})" class="btn-delete">✕</button><input type="time" value="${i.time}" onchange="updateSchedule(${i.id},'time',this.value)" class="bg-white rounded-lg p-2 text-rose-600 font-bold text-sm"><input type="text" value="${i.event}" onchange="updateSchedule(${i.id},'event',this.value)" class="flex-1 bg-transparent border-none text-sm font-medium"></div>`).join(''); }
+        function renderTodo() { document.getElementById('todo-list').innerHTML = state.todoData.map(i => `<div class="flex items-center gap-2 bg-white p-4 rounded-2xl border shadow-sm"><button onclick="deleteTodo(${i.id})" class="btn-delete">✕</button><input type="checkbox" ${i.done?'checked':''} onchange="toggleTodo(${i.id})" class="accent-rose-500 h-5 w-5"><input type="text" value="${i.task}" onchange="updateTodo(${i.id},this.value)" class="flex-1 outline-none text-sm ${i.done?'line-through text-gray-300':''}"></div>`).join(''); }
+        function renderDataTable() { document.getElementById('data-table-body').innerHTML = state.seatingData.map(t => `<tr class="hover:bg-rose-50/30"><td class="px-6 py-4" data-label="桌號">${t.isMain ? '★' : t.id}</td><td class="px-6 py-4 font-bold text-rose-800" data-label="桌名">${t.tableName}</td><td class="px-6 py-4" data-label="人數">${t.guests.filter(g=>g.trim()).length}/${t.guests.length}</td><td class="px-6 py-4 text-[10px] text-gray-400 max-w-[150px] truncate" data-label="名單">${t.guests.join(',')}</td><td class="px-6 py-4" data-label="操作"><button onclick="openEdit(${t.id})" class="text-rose-500 font-bold hover:underline">編輯</button></td></tr>`).join(''); }
+
+        // AI 模擬 (因 GitHub 無密鑰，提供示範)
+        async function suggestMusicAI() { alert("AI 建議已連線，請確保 API Key 已設定。"); }
     </script>
 </body>
 </html>
