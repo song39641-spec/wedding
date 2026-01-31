@@ -55,10 +55,10 @@
     </nav>
 
     <main class="max-w-6xl mx-auto px-4 mt-6">
-        <!-- 1. 桌位圖 -->
+        <!-- 1. 桌位配置圖 -->
         <div id="view-layout" class="tab-content space-y-4">
             <div class="flex justify-between items-center px-2">
-                <h2 class="text-xl font-bold text-rose-700">場地桌位分佈</h2>
+                <h2 class="text-xl font-bold text-rose-700">場地桌位分佈 (左16:右12)</h2>
                 <button onclick="exportLayoutToPNG()" class="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl hover:bg-indigo-700 transition-all font-bold text-xs flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     匯出佈置圖 PNG
@@ -75,7 +75,7 @@
                     </div>
                     <div class="relative flex justify-between gap-2 md:gap-4 pb-8 md:pb-12">
                         <div class="grid grid-cols-2 gap-x-4 md:gap-x-8 gap-y-10 md:gap-y-12 flex-1"><div id="left-block" class="contents"></div></div>
-                        <div class="aisle w-16 md:w-24 flex items-center justify-center rounded-2xl border-x-2 border-rose-100 min-h-[400px] md:min-h-[600px] text-rose-200 font-bold uppercase text-[10px] md:text-sm"><span class="rotate-90">走道 AISLE</span></div>
+                        <div class="aisle w-16 md:w-24 flex items-center justify-center rounded-2xl border-x-2 border-rose-100 min-h-[400px] md:min-h-[600px] text-rose-200 font-bold uppercase text-[10px] md:text-sm"><span class="rotate-90 text-center">走道 AISLE</span></div>
                         <div class="grid grid-cols-2 gap-x-4 md:gap-x-8 gap-y-10 md:gap-y-12 flex-1"><div id="right-block" class="contents"></div></div>
                     </div>
                     <div class="mt-12 md:mt-20 w-full border-t-2 md:border-t-4 border-dashed border-rose-100 pt-6 md:pt-8 flex justify-center text-rose-300 font-medium uppercase text-[10px] md:text-sm">Entrance 入口</div>
@@ -83,14 +83,14 @@
             </div>
         </div>
 
-        <!-- 其餘各視圖 -->
+        <!-- 其餘視圖內容 -->
         <div id="view-pickup" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white rounded-[2rem] shadow-xl p-6 border border-rose-50">
                     <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-rose-700">迎娶儀式</h2><button onclick="addPickupSchedule()" class="bg-rose-500 text-white px-4 py-2 rounded-xl text-xs">+ 新增</button></div>
                     <div class="space-y-3" id="pickup-schedule-list"></div>
                 </div>
-                <div class="space-y-4"><div class="flex justify-between items-center"><h2 class="text-xl font-bold text-rose-700">禮車分配</h2><button onclick="addCar()" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-xs">+ 新增車輛</button></div><div id="cars-container" class="grid gap-4"></div></div>
+                <div class="space-y-4"><div class="flex justify-between items-center"><h2 class="text-xl font-bold text-rose-700">禮車分配</h2><button onclick="addCar()" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-xs">+ 新增</button></div><div id="cars-container" class="grid gap-4"></div></div>
             </div>
         </div>
 
@@ -102,31 +102,24 @@
         </div>
 
         <div id="view-music" class="tab-content hidden space-y-6">
-            <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-rose-50 flex flex-col md:flex-row gap-4 items-center">
-                <input type="text" id="music-theme-input" placeholder="讓 AI 為您推薦音樂..." class="flex-1 p-3 bg-gray-50 border rounded-xl text-sm outline-none">
-                <button onclick="suggestMusicAI()" class="bg-indigo-500 text-white px-6 py-3 rounded-2xl text-sm font-bold">✨ AI 推薦音樂</button>
-            </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="music-lists-container"></div>
         </div>
 
         <div id="view-todo" class="tab-content hidden space-y-6">
             <div class="bg-white rounded-[2rem] shadow-xl p-6 border border-rose-50">
-                <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-rose-700">任務清單</h2><button onclick="addTodoItem()" class="bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold">+ 新增任務</button></div>
+                <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-rose-700">待辦事項</h2><button onclick="addTodoItem()" class="bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold">+ 新增任務</button></div>
                 <div class="grid gap-3" id="todo-list"></div>
             </div>
         </div>
 
         <div id="view-data" class="tab-content hidden space-y-6">
             <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-rose-50">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">系統同步設定 (夫妻協作專用)</h3>
-                <p class="text-xs text-gray-500 mb-4">若您將此網頁放在 GitHub，請在此貼上您的 Firebase Config 以開啟雲端同步功能。</p>
-                <div class="flex gap-3">
-                    <button onclick="openConfigModal()" class="bg-rose-600 text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-md">設定雲端連線</button>
-                    <button onclick="exportToCSV()" class="bg-green-600 text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-md">匯出 CSV 備份</button>
-                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">雲端數據備份</h3>
+                <p class="text-xs text-gray-500 mb-4">資料已自動同步至 Firebase。如有需要可手動匯出備份。</p>
+                <button onclick="exportToCSV()" class="bg-green-600 text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-md">匯出 CSV 備份</button>
             </div>
             <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-rose-50">
-                <div class="p-5 bg-rose-50/50 border-b border-rose-100"><h4 class="font-bold text-rose-900 text-sm">桌位數據明細</h4></div>
+                <div class="p-5 bg-rose-50/50 border-b border-rose-100"><h4 class="font-bold text-rose-900 text-sm">桌位明細</h4></div>
                 <div class="overflow-x-auto"><table class="w-full text-left responsive-table"><thead class="bg-gray-50 text-[10px] text-gray-400 uppercase tracking-widest"><tr><th>桌號</th><th>桌名</th><th>人數</th><th>名單</th><th>操作</th></tr></thead><tbody id="data-table-body" class="divide-y divide-gray-100 text-sm"></tbody></table></div>
             </div>
         </div>
@@ -144,83 +137,78 @@
         </div>
     </div>
 
-    <!-- Firebase Config Modal -->
-    <div id="config-modal" class="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center hidden backdrop-blur-md p-4">
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
-            <h3 class="text-xl font-bold text-rose-800 mb-4">雲端同步設定</h3>
-            <p class="text-xs text-gray-500 mb-4">請直接貼上 Firebase 提供的 Config 程式碼：</p>
-            <textarea id="firebase-config-input" class="w-full h-40 p-4 bg-gray-50 border rounded-xl text-[10px] font-mono outline-none mb-4" placeholder='const firebaseConfig = { ... };'></textarea>
-            <div class="flex gap-3">
-                <button onclick="closeConfigModal()" class="flex-1 py-3 text-gray-400 font-bold">關閉</button>
-                <button onclick="saveFirebaseConfig()" class="flex-1 py-3 bg-rose-600 text-white rounded-xl font-bold transform active:scale-95 transition-transform">儲存並啟動</button>
-            </div>
-        </div>
+    <!-- 同步提示 -->
+    <div id="sync-status" class="fixed bottom-4 right-4 bg-white/90 px-4 py-2 rounded-full shadow-lg border border-rose-100 text-rose-500 text-xs hidden flex items-center gap-2 z-50">
+        <span class="loader w-3 h-3"></span> 同步中...
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // --- 寫入兩位的專屬 Firebase Config ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKnlRG1SF1Th2vYmedM64_EedVGTlt2s4",
+            authDomain: "wedding-bf53c.firebaseapp.com",
+            projectId: "wedding-bf53c",
+            storageBucket: "wedding-bf53c.firebasestorage.app",
+            messagingSenderId: "46733914591",
+            appId: "1:46733914591:web:7a05452a53fd339c23546a",
+            measurementId: "G-HJWE6MQZ8T"
+        };
 
         const WEDDING_DATE = new Date("2026-03-01T00:00:00");
+        const appId = 'wedding-bf53c-prod';
         let activeTab = 'layout';
         let syncTimer = null;
         let db, auth;
 
-        // 初始狀態
-        let state = JSON.parse(localStorage.getItem('wedding_v15_offline_state')) || {
+        let state = JSON.parse(localStorage.getItem('wedding_v17_offline_state')) || {
             seatingData: [],
             scheduleData: [{ id: 1, time: "12:00", event: "婚宴入席" }],
             pickupScheduleData: [{ id: 1, time: "08:00", event: "準備儀式" }],
-            carData: [{ id: 1, info: "領頭車", passengers: ["司機"] }],
+            carData: [{ id: 1, info: "第一部車", passengers: ["司機"] }],
             musicData: { entrance: [], dining1: [], dining2: [] },
             todoData: [],
             tabOrder: [{ id: 'layout', name: '桌位圖' }, { id: 'pickup', name: '迎娶' }, { id: 'schedule', name: '流程' }, { id: 'music', name: '音樂' }, { id: 'todo', name: '待辦' }, { id: 'data', name: '數據' }]
         };
 
-        // Firebase 初始化功能
-        const setupFirebase = async (config) => {
-            if (!config) return;
+        const setupFirebase = async () => {
             try {
-                const app = initializeApp(config);
+                const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
-                
-                if (window.__initial_auth_token) {
-                    await signInWithCustomToken(auth, window.__initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
 
-                const appId = window.__app_id || 'our-private-wedding';
-                // 修正後的 6 段路徑
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'configs', 'main');
-                
                 onSnapshot(docRef, (snap) => {
                     if (snap.exists()) {
                         state = { ...state, ...snap.data() };
-                        localStorage.setItem('wedding_v15_offline_state', JSON.stringify(state));
+                        localStorage.setItem('wedding_v17_offline_state', JSON.stringify(state));
                         refreshUI();
+                    } else {
+                        checkInitSeating();
+                        pushToCloud();
                     }
                     document.getElementById('sync-indicator').classList.remove('hidden');
-                }, (err) => console.error("Firebase Sync Error:", err));
-            } catch (e) { 
-                console.error("Firebase Setup Error", e);
-                alert("Firebase 設定有誤，請確認後重試。");
-            }
+                    document.getElementById('sync-indicator').classList.add('flex');
+                });
+            } catch (e) { console.error(e); }
         };
 
         const pushToCloud = async () => {
-            localStorage.setItem('wedding_v15_offline_state', JSON.stringify(state));
+            localStorage.setItem('wedding_v17_offline_state', JSON.stringify(state));
             if (!auth || !auth.currentUser) return;
-            const appId = window.__app_id || 'our-private-wedding';
+            document.getElementById('sync-status').classList.remove('hidden');
+            document.getElementById('sync-status').classList.add('flex');
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'configs', 'main');
             await setDoc(docRef, state, { merge: true });
+            setTimeout(() => document.getElementById('sync-status').classList.add('hidden'), 800);
         };
 
         window.debouncedPush = () => { clearTimeout(syncTimer); syncTimer = setTimeout(pushToCloud, 1000); };
 
-        // 頁面初始化
         function checkInitSeating() {
             if (state.seatingData.length === 0) {
                 state.seatingData.push({ id: 0, isMain: true, side: 'center', tableName: `主桌`, guests: Array(12).fill('') });
@@ -230,41 +218,6 @@
             }
         }
 
-        // --- 設定管理邏輯 ---
-        window.saveFirebaseConfig = () => {
-            let val = document.getElementById('firebase-config-input').value.trim();
-            if (!val) return alert("請輸入內容！");
-            
-            try {
-                // 智慧提取邏輯：自動過濾掉變數宣告文字
-                if (val.includes('{') && val.includes('}')) {
-                    const match = val.match(/\{[\s\S]*\}/);
-                    if (match) {
-                        val = match[0];
-                    }
-                }
-
-                // 處理非標準 JSON (如沒引號的 Key)
-                // 這裡用一個小技巧，將字串包在 Function 裡執行來還原成物件
-                const configObject = new Function('return ' + val)();
-                
-                if (configObject.apiKey && configObject.projectId) {
-                    localStorage.setItem('wedding_v15_fb_config', JSON.stringify(configObject));
-                    alert("設定儲存成功！網頁即將重新載入啟動同步。");
-                    location.reload();
-                } else {
-                    throw new Error("Missing Keys");
-                }
-            } catch(e) { 
-                alert("解析失敗！請確保貼上的是完整的 { ... } 內容。"); 
-                console.error(e);
-            }
-        };
-
-        window.openConfigModal = () => document.getElementById('config-modal').classList.remove('hidden');
-        window.closeConfigModal = () => document.getElementById('config-modal').classList.add('hidden');
-
-        // --- 其餘 UI 與渲染功能 ---
         window.switchTab = (id) => { activeTab = id; renderNav(); refreshUI(); };
         function renderNav() {
             document.getElementById('nav-tabs-container').innerHTML = state.tabOrder.map(tab => `<button onclick="switchTab('${tab.id}')" class="flex-1 px-4 py-2 rounded-xl font-bold transition-all whitespace-nowrap text-center ${activeTab === tab.id ? 'bg-white text-rose-700 shadow-sm' : 'text-rose-300'}">${tab.name}</button>`).join('');
@@ -272,7 +225,8 @@
 
         function refreshUI() {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`view-${activeTab}`).classList.remove('hidden');
+            const target = document.getElementById(`view-${activeTab}`);
+            if (target) target.classList.remove('hidden');
             if (activeTab === 'layout') renderLayout();
             if (activeTab === 'pickup') renderPickup();
             if (activeTab === 'schedule') renderSchedule();
@@ -299,7 +253,7 @@
             });
         }
 
-        // --- 通用操作輔助 ---
+        // 資料更新操作
         window.addPickupSchedule = () => { state.pickupScheduleData.push({ id: Date.now(), time: "08:00", event: "" }); refreshUI(); debouncedPush(); };
         window.deletePickup = (id) => { state.pickupScheduleData = state.pickupScheduleData.filter(x=>x.id !== id); refreshUI(); debouncedPush(); };
         window.updatePickup = (id,f,v) => { const i = state.pickupScheduleData.find(x=>x.id===id); if(i){i[f]=v; debouncedPush();} };
@@ -320,30 +274,31 @@
         window.toggleTodo = (id) => { const i = state.todoData.find(x=>x.id===id); if(i){i.done=!i.done; refreshUI(); debouncedPush();} };
         window.updateTodo = (id,v) => { const i = state.todoData.find(x=>x.id===id); if(i){i.task=v; debouncedPush();} };
 
-        let curSeatingId = null;
+        let curId = null;
         window.openEdit = (id) => {
-            curSeatingId = id; const t = state.seatingData.find(x => x.id === id);
+            curId = id; const t = state.seatingData.find(x => x.id === id);
             document.getElementById('modal-title').innerText = `${t.tableName}`;
             document.getElementById('edit-tableName').value = t.tableName;
-            document.getElementById('guest-inputs-container').innerHTML = t.guests.map((name, i) => `<div class="relative"><span class="absolute left-4 top-4 text-[9px] text-gray-300 font-bold">${i+1}</span><input type="text" class="guest-input w-full p-4 pl-9 bg-gray-50 border rounded-xl text-xs" value="${name}"></div>`).join('');
+            document.getElementById('guest-inputs-container').innerHTML = t.guests.map((name, i) => `<div class="relative"><span class="absolute left-4 top-4 text-[9px] text-gray-300 font-bold">${i+1}</span><input type="text" class="guest-input w-full p-4 pl-9 bg-gray-50 border rounded-xl text-xs font-medium" value="${name}"></div>`).join('');
             document.getElementById('modal').classList.remove('hidden');
         };
         window.closeModal = () => document.getElementById('modal').classList.add('hidden');
         window.saveTable = () => {
-            const idx = state.seatingData.findIndex(x => x.id === curSeatingId);
+            const idx = state.seatingData.findIndex(x => x.id === curId);
             state.seatingData[idx].tableName = document.getElementById('edit-tableName').value;
             state.seatingData[idx].guests = Array.from(document.querySelectorAll('.guest-input')).map(i => i.value.trim());
             closeModal(); refreshUI(); debouncedPush();
         };
 
         window.exportLayoutToPNG = () => {
-            html2canvas(document.getElementById('capture-area'), { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
+            const el = document.getElementById('capture-area');
+            html2canvas(el, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
                 const link = document.createElement('a'); link.href = canvas.toDataURL('image/png'); link.download = '婚禮佈置圖.png'; link.click();
             });
         };
         window.exportToCSV = () => {
-            let csv = "ID,TableName,Guests\n" + state.seatingData.map(t => `"${t.id}","${t.tableName}","${t.guests.join(',')}"`).join("\n");
-            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: 'text/csv' })); link.download = `wedding_data.csv`; link.click();
+            let csv = "\uFEFFID,桌名,賓客名單\n" + state.seatingData.map(t => `"${t.id}","${t.tableName}","${t.guests.join(',')}"`).join("\n");
+            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); link.download = `wedding_data_backup.csv`; link.click();
         };
 
         function updateCountdown() {
@@ -356,16 +311,8 @@
         }
         setInterval(updateCountdown, 1000);
 
-        window.onload = () => {
-            checkInitSeating();
-            const savedConfig = localStorage.getItem('wedding_v15_fb_config');
-            if (savedConfig) setupFirebase(JSON.parse(savedConfig));
-            else if (window.__firebase_config) setupFirebase(JSON.parse(window.__firebase_config));
-            renderNav();
-            refreshUI();
-        };
+        window.onload = () => { setupFirebase(); renderNav(); refreshUI(); };
 
-        // 頁面渲染補充
         function renderMusic() {
             const cats = ["entrance", "dining1", "dining2"]; const names = ["賓客入場", "一進用餐", "二進用餐"];
             document.getElementById('music-lists-container').innerHTML = cats.map((k, idx) => `<div class="bg-white rounded-3xl shadow-lg border border-rose-50 overflow-hidden"><div class="p-4 bg-rose-50 border-b flex justify-between items-center"><h3 class="font-bold text-rose-800 text-sm">${names[idx]}</h3><button onclick="addMusicItem('${k}')" class="text-[10px] bg-rose-500 text-white px-2 py-1 rounded-lg">加曲</button></div><div class="p-4 space-y-2">${state.musicData[k].sort((a,b)=>a.order-b.order).map(s => `<div class="bg-rose-50/50 p-2 rounded-xl flex items-center gap-2"><button onclick="deleteMusic('${k}',${s.id})" class="btn-delete text-xs">✕</button><input type="number" value="${s.order}" onchange="updateMusic('${k}',${s.id},'order',this.value)" class="w-8 text-center bg-white rounded text-[10px]"><input type="text" value="${s.name}" onchange="updateMusic('${k}',${s.id},'name',this.value)" class="flex-1 bg-transparent text-[10px] outline-none"></div>`).join('')}</div></div>`).join('');
@@ -376,7 +323,7 @@
         }
         function renderSchedule() { document.getElementById('schedule-list').innerHTML = state.scheduleData.map(i => `<div class="flex gap-2 bg-rose-50/20 p-4 rounded-2xl items-center"><button onclick="deleteSchedule(${i.id})" class="btn-delete">✕</button><input type="time" value="${i.time}" onchange="updateSchedule(${i.id},'time',this.value)" class="bg-white rounded-lg p-2 text-rose-600 font-bold text-sm"><input type="text" value="${i.event}" onchange="updateSchedule(${i.id},'event',this.value)" class="flex-1 bg-transparent border-none text-sm font-medium"></div>`).join(''); }
         function renderTodo() { document.getElementById('todo-list').innerHTML = state.todoData.map(i => `<div class="flex items-center gap-2 bg-white p-4 rounded-2xl border shadow-sm"><button onclick="deleteTodo(${i.id})" class="btn-delete">✕</button><input type="checkbox" ${i.done?'checked':''} onchange="toggleTodo(${i.id})" class="accent-rose-500 h-5 w-5"><input type="text" value="${i.task}" onchange="updateTodo(${i.id},this.value)" class="flex-1 outline-none text-sm ${i.done?'line-through text-gray-300':''}"></div>`).join(''); }
-        function renderDataTable() { document.getElementById('data-table-body').innerHTML = state.seatingData.map(t => `<tr class="hover:bg-rose-50/30"><td class="px-6 py-4" data-label="桌號">${t.isMain ? '★' : t.id}</td><td class="px-6 py-4 font-bold text-rose-800" data-label="桌名">${t.tableName}</td><td class="px-6 py-4" data-label="人數">${t.guests.filter(g=>g.trim()).length}/${t.guests.length}</td><td class="px-6 py-4 text-[10px] text-gray-400 max-w-[150px] truncate" data-label="名單">${t.guests.join(',')}</td><td class="px-6 py-4" data-label="操作"><button onclick="openEdit(${t.id})" class="text-rose-500 font-bold hover:underline">編輯</button></td></tr>`).join(''); }
+        function renderDataTable() { document.getElementById('data-table-body').innerHTML = state.seatingData.map(t => `<tr class="hover:bg-rose-50/30 transition-colors"><td class="px-6 py-4" data-label="桌號">${t.isMain ? '★' : t.id}</td><td class="px-6 py-4 font-bold text-rose-800" data-label="桌名">${t.tableName}</td><td class="px-6 py-4" data-label="人數">${t.guests.filter(g=>g.trim()).length}/${t.guests.length}</td><td class="px-6 py-4 text-[10px] text-gray-400 max-w-[150px] truncate" data-label="名單">${t.guests.join(',')}</td><td class="px-6 py-4" data-label="操作"><button onclick="openEdit(${t.id})" class="text-rose-500 font-bold hover:underline">編輯</button></td></tr>`).join(''); }
     </script>
 </body>
-</html> 
+</html>
