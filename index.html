@@ -379,4 +379,4 @@
         function renderDataTable() { document.getElementById('data-table-body').innerHTML = state.seatingData.map(t => `<tr class="hover:bg-rose-50/30"><td class="px-6 py-4" data-label="桌號">${t.isMain ? '★' : t.id}</td><td class="px-6 py-4 font-bold text-rose-800" data-label="桌名">${t.tableName}</td><td class="px-6 py-4" data-label="人數">${t.guests.filter(g=>g.trim()).length}/${t.guests.length}</td><td class="px-6 py-4 text-[10px] text-gray-400 max-w-[150px] truncate" data-label="名單">${t.guests.join(',')}</td><td class="px-6 py-4" data-label="操作"><button onclick="openEdit(${t.id})" class="text-rose-500 font-bold hover:underline">編輯</button></td></tr>`).join(''); }
     </script>
 </body>
-</html>
+</html> 
