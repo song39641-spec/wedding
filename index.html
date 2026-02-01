@@ -10,34 +10,15 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #fffafb; overflow-x: hidden; }
         
-        /* 修正 PNG 匯出文字切半問題 */
-        .table-dot { transition: all 0.3s ease; cursor: pointer; }
-        .table-dot:hover { transform: scale(1.1); filter: brightness(1.1); }
+        /* 拖拽交換視覺效果 */
+        .table-dot { transition: all 0.3s ease; cursor: grab; }
+        .table-dot:active { cursor: grabbing; }
+        .dragging { opacity: 0.4; transform: scale(1.1); }
+        .drag-over { border: 2px dashed #e11d48 !important; background-color: #fff1f2 !important; }
         
-        /* 使用更穩定的文字容器佈局 */
-        .table-label-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            padding: 4px;
-            text-align: center;
-            overflow: visible !important; /* 確保匯出時文字不被切斷 */
-        }
-        
-        .table-label-text {
-            font-size: 11px;
-            line-height: 1.2;
-            font-weight: 700;
-            width: 100%;
-            word-wrap: break-word;
-            white-space: normal;
-        }
-        @media (min-width: 768px) {
-            .table-label-text { font-size: 13px; }
-        }
+        .table-label-container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 4px; text-align: center; overflow: visible !important; pointer-events: none; }
+        .table-label-text { font-size: 11px; line-height: 1.2; font-weight: 700; width: 100%; word-wrap: break-word; white-space: normal; }
+        @media (min-width: 768px) { .table-label-text { font-size: 13px; } }
 
         .aisle { background: repeating-linear-gradient(45deg, #fff5f5, #fff5f5 10px, #fee2e2 10px, #fee2e2 20px); }
         .stage { background: linear-gradient(180deg, #e11d48 0%, #be123c 100%); box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3); }
@@ -47,16 +28,32 @@
         .countdown-card { background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%); box-shadow: 0 4px 12px rgba(225, 29, 72, 0.2); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        @media (max-width: 768px) {
-            .responsive-table thead { display: none; }
-            .responsive-table tr { display: block; margin-bottom: 1rem; border: 1px solid #fee2e2; border-radius: 1rem; padding: 0.5rem; background: white; }
-            .responsive-table td { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem !important; }
-            .responsive-table td::before { content: attr(data-label); font-weight: 700; color: #9f1239; font-size: 0.75rem; }
-        }
-        .btn-delete { color: #ef4444; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; font-size: 18px; }
-        .btn-delete:hover { color: #b91c1c; background-color: #fee2e2; border-radius: 50%; }
+        .btn-delete { color: #ef4444; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; font-size: 16px; border-radius: 50%; }
+        .btn-delete:hover { background-color: #fee2e2; }
+
+        .btn-order { color: #94a3b8; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; font-size: 14px; cursor: pointer; }
+        .btn-order:hover { color: #e11d48; background-color: #fff1f2; border-radius: 4px; }
+
+        .progress-bar { transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .loader { border: 2px solid #f3f3f3; border-top: 2px solid #e11d48; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* 主任務名稱編輯樣式 */
+        .group-title-input {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            width: 100%;
+            font-weight: 700;
+            color: #9f1239;
+            font-size: 1.125rem;
+            outline: none;
+            padding: 2px 0;
+            transition: all 0.2s;
+        }
+        .group-title-input:focus {
+            border-bottom-color: #fda4af;
+        }
     </style>
 </head>
 <body class="min-h-screen pb-10">
@@ -74,7 +71,6 @@
                 <div class="font-bold text-xs tabular-nums" id="countdown-timer-mobile">00天 00:00</div>
             </div>
         </div>
-        
         <div class="flex gap-3 items-center w-full md:w-auto justify-center">
             <div id="nav-tabs-container" class="flex bg-rose-50/50 p-1 rounded-2xl text-[11px] md:text-xs overflow-x-auto no-scrollbar w-full md:max-w-none shadow-inner border border-rose-100/50"></div>
             <div class="hidden md:flex countdown-card text-white px-4 py-1.5 rounded-2xl items-center gap-3 shrink-0">
@@ -86,17 +82,14 @@
     <main class="max-w-6xl mx-auto px-4 mt-6">
         <!-- 1. 桌位配置圖 -->
         <div id="view-layout" class="tab-content space-y-4">
-            <div class="flex justify-between items-center px-2">
-                <h2 class="text-xl font-bold text-rose-700">場地佈置圖</h2>
-                <button id="btn-export-png" onclick="exportLayoutToPNG()" class="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl hover:bg-indigo-700 transition-all font-bold text-xs flex items-center gap-2 shadow-lg shadow-indigo-100">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    匯出 PNG 圖檔
-                </button>
+            <div class="flex flex-col sm:flex-row justify-between items-center px-2 gap-2">
+                <h2 class="text-xl font-bold text-rose-700">場地佈置圖 <span class="text-[10px] font-normal text-gray-400 ml-2">(拖曳圓圈可對調位置)</span></h2>
+                <button onclick="exportLayoutToPNG()" class="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl hover:bg-indigo-700 transition-all font-bold text-xs flex items-center gap-2 shadow-lg">匯出 PNG</button>
             </div>
             <div id="capture-area" class="bg-white p-4 md:p-8 rounded-[2rem] shadow-xl border border-rose-50 overflow-x-auto relative no-scrollbar">
                 <div id="inner-capture" class="min-w-[800px] md:min-w-0 bg-white p-6">
                     <div class="stage w-full h-12 md:h-16 rounded-t-2xl flex items-center justify-center text-white font-bold text-sm md:text-xl mb-6 md:mb-8 tracking-widest">STAGE 舞台</div>
-                    <div class="flex justify-center mb-12"><div id="main-table-container"></div></div>
+                    <div class="flex justify-center mb-10 md:mb-12"><div id="main-table-container"></div></div>
                     <div class="flex justify-between gap-2 md:gap-4 mb-8 text-center">
                         <div class="flex-1"><div class="inline-block px-10 py-2.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold text-sm shadow-sm">男方席</div></div>
                         <div class="w-16 md:w-24"></div>
@@ -112,62 +105,72 @@
             </div>
         </div>
 
-        <!-- 各分頁：迎娶、流程、音樂、待辦、數據 -->
+        <!-- 2. 迎娶頁面 -->
         <div id="view-pickup" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white rounded-[2rem] shadow-xl p-6 border border-rose-50">
-                    <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-rose-700">迎娶儀式</h2><button onclick="addPickupSchedule()" class="bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold">+ 新增</button></div>
+                    <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-rose-700">迎娶儀式</h2><button onclick="addPickupSchedule()" class="bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold">+ 新增環節</button></div>
                     <div class="space-y-3" id="pickup-schedule-list"></div>
                 </div>
-                <div class="space-y-4"><div class="flex justify-between items-center"><h2 class="text-xl font-bold text-rose-700">禮車分配</h2><button onclick="addCar()" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold">+ 新增</button></div><div id="cars-container" class="grid gap-4"></div></div>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center"><h2 class="text-xl font-bold text-rose-700">禮車分配</h2><button onclick="addCar()" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold">+ 新增車輛</button></div>
+                    <div id="cars-container" class="grid gap-4"></div>
+                </div>
             </div>
         </div>
 
+        <!-- 3. 婚宴流程頁面 -->
         <div id="view-schedule" class="tab-content hidden space-y-6">
             <div class="bg-white rounded-[2rem] shadow-xl p-6 border border-rose-50">
-                <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-rose-700">婚宴流程表</h2><button onclick="addScheduleRow()" class="bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold">+ 新增</button></div>
+                <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-rose-700">婚宴流程表</h2><button onclick="addScheduleRow()" class="bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold">+ 新增環節</button></div>
                 <div class="space-y-3" id="schedule-list"></div>
             </div>
         </div>
 
+        <!-- 4. 音樂頁面 -->
         <div id="view-music" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="music-lists-container"></div>
         </div>
 
+        <!-- 5. 待辦事項頁面 (主任務名稱可編輯) -->
         <div id="view-todo" class="tab-content hidden space-y-6">
-            <div class="bg-white rounded-[2rem] shadow-xl p-6 border border-rose-50">
-                <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-rose-700">任務清單</h2><button onclick="addTodoItem()" class="bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold">+ 新增任務</button></div>
-                <div class="grid gap-3" id="todo-list"></div>
+            <div class="flex flex-col sm:flex-row justify-between items-center px-2 gap-4">
+                <h2 class="text-xl font-bold text-rose-700 shrink-0">任務進度追蹤</h2>
+                <div class="flex w-full max-w-md gap-2">
+                    <input type="text" id="new-todo-group-input" placeholder="輸入新的主任務名稱..." class="flex-1 p-3 bg-white border border-rose-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-rose-200">
+                    <button onclick="addTodoGroup()" class="bg-rose-600 text-white px-6 py-2 rounded-xl text-xs font-bold whitespace-nowrap shadow-lg shadow-rose-100">建立</button>
+                </div>
             </div>
+            <div class="grid gap-6" id="todo-groups-container"></div>
         </div>
 
+        <!-- 6. 數據管理 -->
         <div id="view-data" class="tab-content hidden space-y-6">
-            <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-rose-50">
-                <h3 class="text-lg font-bold text-gray-800 mb-2">數據管理</h3>
-                <button onclick="exportToCSV()" class="bg-green-600 text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-md">匯出 CSV 備份</button>
-            </div>
             <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-rose-50">
-                <div class="p-5 bg-rose-50/50 border-b border-rose-100"><h4 class="font-bold text-rose-900 text-sm">桌位名單明細</h4></div>
-                <div class="overflow-x-auto"><table class="w-full text-left responsive-table"><thead class="bg-gray-50 text-[10px] text-gray-400 uppercase tracking-widest"><tr><th>桌號</th><th>桌名</th><th>人數</th><th>名單</th><th>操作</th></tr></thead><tbody id="data-table-body" class="divide-y divide-gray-100 text-sm"></tbody></table></div>
+                <div class="p-5 bg-rose-50/50 border-b border-rose-100 flex justify-between items-center">
+                    <h4 class="font-bold text-rose-900 text-sm">數據管理</h4>
+                    <button onclick="exportToCSV()" class="bg-green-600 text-white px-4 py-2 rounded-xl font-bold text-xs">匯出 CSV</button>
+                </div>
+                <div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50 text-[10px] text-gray-400 uppercase tracking-widest"><tr><th class="px-6 py-3">桌號</th><th class="px-6 py-3">桌名</th><th class="px-6 py-3">人數</th><th class="px-6 py-3">操作</th></tr></thead><tbody id="data-table-body" class="divide-y divide-gray-100 text-sm"></tbody></table></div>
             </div>
         </div>
     </main>
 
-    <!-- 編輯彈窗 -->
+    <!-- 編輯 Modal -->
     <div id="modal" class="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center hidden backdrop-blur-md">
         <div class="bg-white w-full sm:max-w-2xl rounded-t-[2rem] sm:rounded-[2.5rem] p-6 md:p-10 shadow-2xl max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-start mb-6"><h3 class="text-2xl font-bold text-rose-800" id="modal-title">管理座次</h3><button onclick="closeModal()" class="text-gray-300 text-3xl">&times;</button></div>
             <div class="space-y-6">
-                <input type="text" id="edit-tableName" class="w-full p-4 bg-gray-50 border rounded-xl outline-none" placeholder="桌位名稱">
+                <input type="text" id="edit-tableName" class="w-full p-4 bg-gray-50 border rounded-xl outline-none font-bold" placeholder="桌位名稱">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="guest-inputs-container"></div>
             </div>
-            <div class="mt-8 flex flex-col-reverse sm:flex-row gap-3 pt-6 border-t"><button onclick="closeModal()" class="w-full py-4 text-gray-400 font-bold">取消</button><button onclick="saveTable()" class="w-full py-4 bg-rose-600 text-white rounded-2xl font-bold shadow-lg">儲存變更</button></div>
+            <div class="mt-8 flex flex-col-reverse sm:flex-row gap-3 pt-6 border-t"><button onclick="closeModal()" class="w-full py-4 text-gray-400 font-bold">取消</button><button onclick="saveTable()" class="w-full py-4 bg-rose-600 text-white rounded-2xl font-bold shadow-lg">儲存</button></div>
         </div>
     </div>
 
-    <!-- 同步狀態標籤 -->
+    <!-- 同步提示 -->
     <div id="sync-status" class="fixed bottom-4 right-4 bg-white/90 px-4 py-2 rounded-full shadow-lg border border-rose-100 text-rose-500 text-xs hidden flex items-center gap-2 z-50">
-        <span class="loader w-3 h-3"></span> 雲端連動中
+        <span class="loader w-3 h-3"></span> 同步中...
     </div>
 
     <script type="module">
@@ -175,7 +178,7 @@
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- 硬編碼 Firebase 設定 ---
+        // --- Firebase 設定 ---
         const firebaseConfig = {
             apiKey: "AIzaSyBKnlRG1SF1Th2vYmedM64_EedVGTlt2s4",
             authDomain: "wedding-bf53c.firebaseapp.com",
@@ -192,13 +195,13 @@
         let syncTimer = null;
         let db, auth;
 
-        let state = JSON.parse(localStorage.getItem('wedding_v17_offline_state')) || {
+        let state = JSON.parse(localStorage.getItem('wedding_v21_state')) || {
             seatingData: [],
-            scheduleData: [{ id: 1, time: "12:00", event: "開席" }],
-            pickupScheduleData: [{ id: 1, time: "08:00", event: "儀式準備" }],
+            scheduleData: [{ id: 1, time: "12:00", event: "開席儀式" }],
+            pickupScheduleData: [{ id: 1, time: "08:00", event: "化妝準備" }],
             carData: [{ id: 1, info: "第一部車", passengers: ["司機"] }],
             musicData: { entrance: [], dining1: [], dining2: [] },
-            todoData: [],
+            todoGroups: [],
             tabOrder: [{ id: 'layout', name: '桌位圖' }, { id: 'pickup', name: '迎娶' }, { id: 'schedule', name: '流程' }, { id: 'music', name: '音樂' }, { id: 'todo', name: '待辦' }, { id: 'data', name: '數據' }]
         };
 
@@ -212,11 +215,26 @@
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'configs', 'main');
                 onSnapshot(docRef, (snap) => {
                     if (snap.exists()) {
-                        state = { ...state, ...snap.data() };
-                        localStorage.setItem('wedding_v17_offline_state', JSON.stringify(state));
+                        let incoming = snap.data();
+                        
+                        // --- 資料遷移邏輯 ---
+                        if (incoming.todoData && incoming.todoData.length > 0 && (!incoming.todoGroups || incoming.todoGroups.length === 0)) {
+                            incoming.todoGroups = [{
+                                id: Date.now(),
+                                title: "從舊版遷移之任務",
+                                subtasks: incoming.todoData.map(t => ({
+                                    id: t.id,
+                                    text: t.task || t.text || "未命名項目",
+                                    completed: t.done || t.completed || false
+                                }))
+                            }];
+                        }
+
+                        state = { ...state, ...incoming };
+                        localStorage.setItem('wedding_v21_state', JSON.stringify(state));
                         refreshUI();
                     } else {
-                        checkInitSeating();
+                        initSeating();
                         pushToCloud();
                     }
                     document.getElementById('sync-indicator').classList.remove('hidden');
@@ -226,7 +244,7 @@
         };
 
         const pushToCloud = async () => {
-            localStorage.setItem('wedding_v17_offline_state', JSON.stringify(state));
+            localStorage.setItem('wedding_v21_state', JSON.stringify(state));
             if (!auth || !auth.currentUser) return;
             document.getElementById('sync-status').classList.remove('hidden');
             document.getElementById('sync-status').classList.add('flex');
@@ -237,7 +255,7 @@
 
         window.debouncedPush = () => { clearTimeout(syncTimer); syncTimer = setTimeout(pushToCloud, 1000); };
 
-        function checkInitSeating() {
+        function initSeating() {
             if (state.seatingData.length === 0) {
                 state.seatingData.push({ id: 0, isMain: true, side: 'center', tableName: `主桌`, guests: Array(12).fill('') });
                 for (let i = 1; i <= 28; i++) {
@@ -246,6 +264,85 @@
             }
         }
 
+        // --- 拖曳核心 ---
+        let dragSourceId = null;
+        function handleDragStart(e) { dragSourceId = e.target.dataset.id; e.target.classList.add('dragging'); }
+        function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); return false; }
+        function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+        function handleDrop(e) {
+            e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+            const targetId = e.currentTarget.dataset.id;
+            if (dragSourceId && dragSourceId !== targetId) {
+                const sIdx = state.seatingData.findIndex(t => t.id == dragSourceId);
+                const tIdx = state.seatingData.findIndex(t => t.id == targetId);
+                const sName = state.seatingData[sIdx].tableName, sGuests = [...state.seatingData[sIdx].guests];
+                state.seatingData[sIdx].tableName = state.seatingData[tIdx].tableName;
+                state.seatingData[sIdx].guests = [...state.seatingData[tIdx].guests];
+                state.seatingData[tIdx].tableName = sName;
+                state.seatingData[tIdx].guests = sGuests;
+                refreshUI(); debouncedPush();
+            }
+        }
+
+        // --- 排序功能 ---
+        window.reorderItem = (arrayName, index, dir) => {
+            const arr = state[arrayName];
+            const newIndex = dir === 'up' ? index - 1 : index + 1;
+            if (newIndex < 0 || newIndex >= arr.length) return;
+            [arr[index], arr[newIndex]] = [arr[newIndex], arr[index]];
+            refreshUI(); debouncedPush();
+        };
+
+        // --- 待辦功能 ---
+        window.addTodoGroup = () => {
+            const input = document.getElementById('new-todo-group-input');
+            const title = input.value.trim();
+            if (!title) return;
+            state.todoGroups.push({ id: Date.now(), title, subtasks: [] });
+            input.value = '';
+            refreshUI(); debouncedPush();
+        };
+
+        // 更新主任務名稱
+        window.updateTodoGroupTitle = (id, newTitle) => {
+            const g = state.todoGroups.find(x => x.id === id);
+            if (g) {
+                g.title = newTitle;
+                debouncedPush();
+            }
+        };
+
+        window.addSubtask = (gid) => {
+            const input = document.getElementById(`new-subtask-input-${gid}`);
+            const text = input.value.trim();
+            if (!text) return;
+            const g = state.todoGroups.find(x=>x.id===gid);
+            g.subtasks.push({ id: Date.now(), text, completed: false });
+            input.value = '';
+            refreshUI(); debouncedPush();
+        };
+
+        window.toggleSubtask = (gid, sid) => {
+            const g = state.todoGroups.find(x=>x.id===gid);
+            const s = g.subtasks.find(x=>x.id===sid);
+            s.completed = !s.completed;
+            refreshUI(); debouncedPush();
+        };
+
+        window.deleteTodoGroup = (id) => { 
+            if(confirm("確定刪除此主任務與子項目嗎？")) {
+                state.todoGroups = state.todoGroups.filter(x=>x.id!==id); 
+                refreshUI(); debouncedPush(); 
+            }
+        };
+        
+        window.deleteSubtask = (gid, sid) => {
+            const g = state.todoGroups.find(x=>x.id===gid);
+            g.subtasks = g.subtasks.filter(x=>x.id!==sid);
+            refreshUI(); debouncedPush();
+        };
+
+        // --- UI 切換 ---
         window.switchTab = (id) => { activeTab = id; renderNav(); refreshUI(); };
         function renderNav() {
             document.getElementById('nav-tabs-container').innerHTML = state.tabOrder.map(tab => `<button onclick="switchTab('${tab.id}')" class="flex-1 px-4 py-2 rounded-xl font-bold transition-all whitespace-nowrap text-center ${activeTab === tab.id ? 'bg-white text-rose-700 shadow-sm' : 'text-rose-300'}">${tab.name}</button>`).join('');
@@ -276,119 +373,118 @@
                 else if (filled === t.guests.length) bg = 'bg-rose-600 text-white';
                 else if (filled > 0) bg = 'bg-rose-400 text-white';
                 const sClass = (!t.isMain && t.localIndex % 2 !== 0) ? 'stagger-offset' : '';
-                
-                // 改版後的圓圈文字佈局，解決 PNG 切斷問題
-                const html = `
-                    <div onclick="openEdit(${t.id})" class="table-dot flex flex-col items-center ${sClass}">
-                        <div class="${t.isMain ? 'w-24 md:w-28 h-24 md:h-28' : 'w-16 md:w-20 h-16 md:h-20'} rounded-full flex items-center justify-center p-1 shadow-sm mb-2 ${bg}">
-                            <div class="table-label-container">
-                                <div class="table-label-text border-b border-white/20 pb-0.5 mb-0.5">${t.tableName}</div>
-                                <div class="text-[9px] md:text-[10px] opacity-90">${filled}/${t.guests.length}</div>
-                            </div>
-                        </div>
-                    </div>`;
-                if (t.isMain) main.innerHTML = html; else if (t.side === 'left') left.innerHTML += html; else right.innerHTML += html;
+                const dot = document.createElement('div');
+                dot.className = `table-dot flex flex-col items-center ${sClass}`;
+                dot.draggable = true; dot.dataset.id = t.id;
+                dot.addEventListener('dragstart', handleDragStart);
+                dot.addEventListener('dragover', handleDragOver);
+                dot.addEventListener('dragleave', handleDragLeave);
+                dot.addEventListener('drop', handleDrop);
+                dot.onclick = () => openEdit(t.id);
+                dot.innerHTML = `<div class="${t.isMain ? 'w-24 md:w-28 h-24 md:h-28' : 'w-16 md:w-20 h-16 md:h-20'} rounded-full flex items-center justify-center p-1 shadow-sm mb-2 ${bg}"><div class="table-label-container"><div class="table-label-text border-b border-white/20 pb-0.5 mb-0.5">${t.tableName}</div><div class="text-[9px] md:text-[10px] opacity-90">${filled}/${t.guests.length}</div></div></div>`;
+                if (t.isMain) main.appendChild(dot); else if (t.side === 'left') left.appendChild(dot); else right.appendChild(dot);
             });
         }
 
-        // 資料更新操作
+        function renderPickup() {
+            document.getElementById('pickup-schedule-list').innerHTML = state.pickupScheduleData.map((i, idx) => `
+                <div class="flex gap-2 bg-rose-50/40 p-3 rounded-2xl items-center">
+                    <div class="flex flex-col"><button onclick="reorderItem('pickupScheduleData', ${idx}, 'up')" class="btn-order">▲</button><button onclick="reorderItem('pickupScheduleData', ${idx}, 'down')" class="btn-order">▼</button></div>
+                    <button onclick="deletePickup(${i.id})" class="btn-delete px-1">✕</button>
+                    <input type="time" value="${i.time}" onchange="updatePickup(${i.id},'time',this.value)" class="bg-white rounded-lg p-2 text-rose-600 font-bold text-xs">
+                    <input type="text" value="${i.event}" onchange="updatePickup(${i.id},'event',this.value)" class="flex-1 bg-transparent border-none text-xs outline-none">
+                </div>`).join('');
+            document.getElementById('cars-container').innerHTML = state.carData.map((c, idx) => `
+                <div class="bg-white border border-rose-50 p-5 rounded-[2rem] shadow-sm">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="flex flex-col"><button onclick="reorderItem('carData', ${idx}, 'up')" class="btn-order text-[10px]">▲</button><button onclick="reorderItem('carData', ${idx}, 'down')" class="btn-order text-[10px]">▼</button></div>
+                        <button onclick="deleteCar(${c.id})" class="btn-delete">✕</button>
+                        <input type="text" value="${c.info}" onchange="updateCar(${c.id},this.value)" class="font-bold text-rose-800 outline-none w-full">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${c.passengers.map((p, pIdx) => `<div class="flex items-center gap-1 bg-gray-50 p-2 rounded-xl"><button onclick="deletePax(${c.id},${pIdx})" class="text-gray-300">×</button><input type="text" value="${p}" onchange="updatePax(${c.id},${pIdx},this.value)" class="bg-transparent text-[10px] w-full outline-none"></div>`).join('')}
+                        <button onclick="addPax(${c.id})" class="text-[10px] border border-dashed border-rose-200 text-rose-300 rounded-xl py-2">+ 加人</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function renderSchedule() {
+            document.getElementById('schedule-list').innerHTML = state.scheduleData.map((i, idx) => `
+                <div class="flex gap-2 bg-rose-50/20 p-4 rounded-2xl items-center">
+                    <div class="flex flex-col"><button onclick="reorderItem('scheduleData', ${idx}, 'up')" class="btn-order">▲</button><button onclick="reorderItem('scheduleData', ${idx}, 'down')" class="btn-order">▼</button></div>
+                    <button onclick="deleteSchedule(${i.id})" class="btn-delete">✕</button>
+                    <input type="time" value="${i.time}" onchange="updateSchedule(${i.id},'time',this.value)" class="bg-white rounded-lg p-2 text-rose-600 font-bold text-sm">
+                    <input type="text" value="${i.event}" onchange="updateSchedule(${i.id},'event',this.value)" class="flex-1 bg-transparent border-none text-sm font-medium outline-none">
+                </div>`).join('');
+        }
+
+        function renderTodo() {
+            document.getElementById('todo-groups-container').innerHTML = state.todoGroups.map((g, idx) => {
+                const total = g.subtasks.length;
+                const done = g.subtasks.filter(x => x.completed).length;
+                const perc = total === 0 ? 0 : Math.round((done / total) * 100);
+                return `
+                <div class="bg-white rounded-[2rem] shadow-lg border border-rose-50 overflow-hidden">
+                    <div class="p-6 pb-2">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center gap-2 flex-1">
+                                <div class="flex flex-col">
+                                    <button onclick="reorderItem('todoGroups', ${idx}, 'up')" class="btn-order text-[10px]">▲</button>
+                                    <button onclick="reorderItem('todoGroups', ${idx}, 'down')" class="btn-order text-[10px]">▼</button>
+                                </div>
+                                <div class="flex-1">
+                                    <input type="text" value="${g.title}" onchange="updateTodoGroupTitle(${g.id}, this.value)" class="group-title-input" placeholder="主任務名稱">
+                                    <p class="text-[10px] text-gray-400">進度：${perc}% (${done}/${total})</p>
+                                </div>
+                            </div>
+                            <button onclick="deleteTodoGroup(${g.id})" class="text-gray-300 text-xs hover:text-red-500 ml-2">✕ 刪除</button>
+                        </div>
+                        <div class="w-full h-2.5 bg-rose-50 rounded-full overflow-hidden mb-6 shadow-inner"><div class="progress-bar h-full bg-rose-500 shadow-md shadow-rose-200" style="width: ${perc}%"></div></div>
+                    </div>
+                    <div class="bg-gray-50/30 p-5 pt-0 space-y-2">
+                        ${g.subtasks.map(s => `<div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-sm"><input type="checkbox" ${s.completed ? 'checked' : ''} onchange="toggleSubtask(${g.id}, ${s.id})" class="accent-rose-500 h-5 w-5"><span class="flex-1 text-sm ${s.completed ? 'line-through text-gray-300' : 'text-gray-700 font-medium'}">${s.text}</span><button onclick="deleteSubtask(${g.id}, ${s.id})" class="text-gray-300">✕</button></div>`).join('')}
+                        <div class="flex gap-2 pt-2">
+                            <input type="text" id="new-subtask-input-${g.id}" placeholder="新增子項目..." class="flex-1 p-2 bg-white border border-dashed rounded-xl text-xs outline-none focus:border-rose-300">
+                            <button onclick="addSubtask(${g.id})" class="bg-rose-50 text-rose-600 px-4 py-2 rounded-xl text-[10px] font-bold">+ 加入</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // --- 其餘輔助 ---
         window.addPickupSchedule = () => { state.pickupScheduleData.push({ id: Date.now(), time: "08:00", event: "" }); refreshUI(); debouncedPush(); };
-        window.deletePickup = (id) => { state.pickupScheduleData = state.pickupScheduleData.filter(x=>x.id !== id); refreshUI(); debouncedPush(); };
+        window.deletePickup = (id) => { state.pickupScheduleData = state.pickupScheduleData.filter(x=>x.id!==id); refreshUI(); debouncedPush(); };
         window.updatePickup = (id,f,v) => { const i = state.pickupScheduleData.find(x=>x.id===id); if(i){i[f]=v; debouncedPush();} };
         window.addCar = () => { state.carData.push({ id: Date.now(), info: `領頭車`, passengers: ["司機"] }); refreshUI(); debouncedPush(); };
-        window.deleteCar = (id) => { state.carData = state.carData.filter(x=>x.id !== id); refreshUI(); debouncedPush(); };
+        window.deleteCar = (id) => { state.carData = state.carData.filter(x=>x.id!==id); refreshUI(); debouncedPush(); };
         window.updateCar = (id,v) => { const c = state.carData.find(x=>x.id===id); if(c){c.info=v; debouncedPush();} };
         window.addPax = (cid) => { const c = state.carData.find(x=>x.id===cid); if(c){c.passengers.push(""); refreshUI(); debouncedPush();} };
         window.updatePax = (cid,idx,v) => { const c = state.carData.find(x=>x.id===cid); if(c){c.passengers[idx]=v; debouncedPush();} };
         window.deletePax = (cid,idx) => { const c = state.carData.find(x=>x.id===cid); if(c){c.passengers.splice(idx,1); refreshUI(); debouncedPush();} };
         window.addScheduleRow = () => { state.scheduleData.push({ id: Date.now(), time: "12:00", event: "" }); refreshUI(); debouncedPush(); };
-        window.deleteSchedule = (id) => { state.scheduleData = state.scheduleData.filter(x=>x.id !== id); refreshUI(); debouncedPush(); };
+        window.deleteSchedule = (id) => { state.scheduleData = state.scheduleData.filter(x=>x.id!==id); refreshUI(); debouncedPush(); };
         window.updateSchedule = (id,f,v) => { const i = state.scheduleData.find(x=>x.id===id); if(i){i[f]=v; debouncedPush();} };
+
+        function renderMusic() { const cats = ["entrance", "dining1", "dining2"]; const names = ["賓客入場", "一進用餐", "二進用餐"]; document.getElementById('music-lists-container').innerHTML = cats.map((k, idx) => `<div class="bg-white rounded-3xl shadow-lg border border-rose-50 overflow-hidden"><div class="p-4 bg-rose-50 border-b flex justify-between items-center"><h3 class="font-bold text-rose-800 text-sm">${names[idx]}</h3><button onclick="addMusicItem('${k}')" class="text-[10px] bg-rose-500 text-white px-2 py-1 rounded-lg">加曲</button></div><div class="p-4 space-y-2">${state.musicData[k].map((s, sIdx) => `<div class="bg-rose-50/50 p-2 rounded-xl flex items-center gap-2"><div class="flex flex-col"><button onclick="moveMusic('${k}',${sIdx},'up')" class="btn-order text-[10px]">▲</button><button onclick="moveMusic('${k}',${sIdx},'down')" class="btn-order text-[10px]">▼</button></div><button onclick="deleteMusic('${k}',${s.id})" class="btn-delete text-xs">✕</button><input type="text" value="${s.name}" onchange="updateMusic('${k}',${s.id},'name',this.value)" class="flex-1 bg-transparent text-[10px] outline-none"></div>`).join('')}</div></div>`).join(''); }
         window.addMusicItem = (k) => { state.musicData[k].push({ id: Date.now(), name: "", order: state.musicData[k].length+1 }); refreshUI(); debouncedPush(); };
-        window.deleteMusic = (k,id) => { state.musicData[k] = state.musicData[k].filter(x=>x.id !== id); refreshUI(); debouncedPush(); };
-        window.updateMusic = (k,id,f,v) => { const s = state.musicData[k].find(x=>x.id===id); if(s){s[f]=v; debouncedPush(); if(f==='order') refreshUI();} };
-        window.addTodoItem = () => { state.todoData.push({ id: Date.now(), task: "", done: false }); refreshUI(); debouncedPush(); };
-        window.deleteTodo = (id) => { state.todoData = state.todoData.filter(x=>x.id !== id); refreshUI(); debouncedPush(); };
-        window.toggleTodo = (id) => { const i = state.todoData.find(x=>x.id===id); if(i){i.done=!i.done; refreshUI(); debouncedPush();} };
-        window.updateTodo = (id,v) => { const i = state.todoData.find(x=>x.id===id); if(i){i.task=v; debouncedPush();} };
+        window.deleteMusic = (k,id) => { state.musicData[k] = state.musicData[k].filter(x=>x.id!==id); refreshUI(); debouncedPush(); };
+        window.updateMusic = (k,id,f,v) => { const s = state.musicData[k].find(x=>x.id===id); if(s){s[f]=v; debouncedPush();} };
+        window.moveMusic = (k, idx, dir) => { const arr = state.musicData[k]; const nIdx = dir === 'up' ? idx - 1 : idx + 1; if(nIdx < 0 || nIdx >= arr.length) return; [arr[idx], arr[nIdx]] = [arr[nIdx], arr[idx]]; refreshUI(); debouncedPush(); };
 
-        let curId = null;
-        window.openEdit = (id) => {
-            curId = id; const t = state.seatingData.find(x => x.id === id);
-            document.getElementById('modal-title').innerText = `${t.tableName}`;
-            document.getElementById('edit-tableName').value = t.tableName;
-            document.getElementById('guest-inputs-container').innerHTML = t.guests.map((name, i) => `<div class="relative"><span class="absolute left-4 top-4 text-[9px] text-gray-300 font-bold">${i+1}</span><input type="text" class="guest-input w-full p-4 pl-9 bg-gray-50 border rounded-xl text-xs font-medium" value="${name}"></div>`).join('');
-            document.getElementById('modal').classList.remove('hidden');
-        };
+        let curSeatingId = null;
+        window.openEdit = (id) => { curSeatingId = id; const t = state.seatingData.find(x => x.id === id); document.getElementById('modal-title').innerText = `${t.tableName}`; document.getElementById('edit-tableName').value = t.tableName; document.getElementById('guest-inputs-container').innerHTML = t.guests.map((name, i) => `<div class="relative"><span class="absolute left-4 top-4 text-[9px] text-gray-300 font-bold">${i+1}</span><input type="text" class="guest-input w-full p-4 pl-9 bg-gray-50 border rounded-xl text-xs font-medium" value="${name}"></div>`).join(''); document.getElementById('modal').classList.remove('hidden'); };
         window.closeModal = () => document.getElementById('modal').classList.add('hidden');
-        window.saveTable = () => {
-            const idx = state.seatingData.findIndex(x => x.id === curId);
-            state.seatingData[idx].tableName = document.getElementById('edit-tableName').value;
-            state.seatingData[idx].guests = Array.from(document.querySelectorAll('.guest-input')).map(i => i.value.trim());
-            closeModal(); refreshUI(); debouncedPush();
-        };
+        window.saveTable = () => { const idx = state.seatingData.findIndex(x => x.id === curSeatingId); state.seatingData[idx].tableName = document.getElementById('edit-tableName').value; state.seatingData[idx].guests = Array.from(document.querySelectorAll('.guest-input')).map(i => i.value.trim()); closeModal(); refreshUI(); debouncedPush(); };
 
-        // --- 優化後的 PNG 匯出功能 ---
-        window.exportLayoutToPNG = () => {
-            const btn = document.getElementById('btn-export-png');
-            const originalText = btn.innerHTML;
-            btn.innerText = "生成中...";
-            btn.disabled = true;
+        window.exportLayoutToPNG = () => { setTimeout(() => { html2canvas(document.getElementById('inner-capture'), { scale: 3, backgroundColor: "#ffffff" }).then(canvas => { const link = document.createElement('a'); link.href = canvas.toDataURL('image/png', 1.0); link.download = '場地佈置圖.png'; link.click(); }); }, 500); };
+        window.exportToCSV = () => { let csv = "\uFEFFID,桌名,名單\n" + state.seatingData.map(t => `"${t.id}","${t.tableName}","${t.guests.join(',')}"`).join("\n"); const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); link.download = `wedding_backup.csv`; link.click(); };
+        function renderDataTable() { document.getElementById('data-table-body').innerHTML = state.seatingData.map(t => `<tr class="hover:bg-rose-50/30 transition-colors"><td class="px-6 py-4">${t.isMain ? '★' : t.id}</td><td class="px-6 py-4 font-bold text-rose-800">${t.tableName}</td><td class="px-6 py-4">${t.guests.filter(g=>g.trim()).length}/${t.guests.length}</td><td class="px-6 py-4"><button onclick="openEdit(${t.id})" class="text-rose-500 font-bold hover:underline">編輯</button></td></tr>`).join(''); }
 
-            // 給予短暫延遲確保 UI 渲染完全，並解決 html2canvas 座標問題
-            setTimeout(() => {
-                const el = document.getElementById('inner-capture');
-                html2canvas(el, { 
-                    scale: 3, // 進一步提高清晰度
-                    backgroundColor: "#ffffff",
-                    useCORS: true,
-                    logging: false,
-                    width: el.scrollWidth,
-                    height: el.scrollHeight,
-                    onclone: (clonedDoc) => {
-                        // 在克隆出的 DOM 中移除溢出限制
-                        const labels = clonedDoc.querySelectorAll('.table-label-container');
-                        labels.forEach(l => l.style.overflow = 'visible');
-                    }
-                }).then(canvas => {
-                    const link = document.createElement('a');
-                    link.href = canvas.toDataURL('image/png', 1.0);
-                    link.download = '我們的婚禮場地佈置圖.png';
-                    link.click();
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                });
-            }, 500);
-        };
-
-        window.exportToCSV = () => {
-            let csv = "\uFEFFID,桌名,名單\n" + state.seatingData.map(t => `"${t.id}","${t.tableName}","${t.guests.join(',')}"`).join("\n");
-            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); link.download = `wedding_backup.csv`; link.click();
-        };
-
-        function updateCountdown() {
-            const diff = WEDDING_DATE - new Date();
-            const tEl = document.getElementById('countdown-timer'), tElMob = document.getElementById('countdown-timer-mobile');
-            if (diff <= 0) { tEl.innerText = tElMob.innerText = "新婚快樂！"; return; }
-            const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
-            tEl.innerText = `${d}天 ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            tElMob.innerText = `${d}天 ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
-        }
+        function updateCountdown() { const diff = WEDDING_DATE - new Date(); const tEl = document.getElementById('countdown-timer'), tElMob = document.getElementById('countdown-timer-mobile'); if (diff <= 0) { tEl.innerText = tElMob.innerText = "新婚快樂！"; return; } const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000); tEl.innerText = `${d}天 ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; tElMob.innerText = `${d}天 ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; }
         setInterval(updateCountdown, 1000);
 
         window.onload = () => { setupFirebase(); renderNav(); refreshUI(); };
-
-        function renderMusic() {
-            const cats = ["entrance", "dining1", "dining2"]; const names = ["賓客入場", "一進用餐", "二進用餐"];
-            document.getElementById('music-lists-container').innerHTML = cats.map((k, idx) => `<div class="bg-white rounded-3xl shadow-lg border border-rose-50 overflow-hidden"><div class="p-4 bg-rose-50 border-b flex justify-between items-center"><h3 class="font-bold text-rose-800 text-sm">${names[idx]}</h3><button onclick="addMusicItem('${k}')" class="text-[10px] bg-rose-500 text-white px-2 py-1 rounded-lg">加曲</button></div><div class="p-4 space-y-2">${state.musicData[k].sort((a,b)=>a.order-b.order).map(s => `<div class="bg-rose-50/50 p-2 rounded-xl flex items-center gap-2"><button onclick="deleteMusic('${k}',${s.id})" class="btn-delete text-xs">✕</button><input type="number" value="${s.order}" onchange="updateMusic('${k}',${s.id},'order',this.value)" class="w-8 text-center bg-white rounded text-[10px]"><input type="text" value="${s.name}" onchange="updateMusic('${k}',${s.id},'name',this.value)" class="flex-1 bg-transparent text-[10px] outline-none"></div>`).join('')}</div></div>`).join('');
-        }
-        function renderPickup() {
-            document.getElementById('pickup-schedule-list').innerHTML = state.pickupScheduleData.map(i => `<div class="flex gap-2 bg-rose-50/40 p-3 rounded-2xl items-center"><button onclick="deletePickup(${i.id})" class="btn-delete">✕</button><input type="time" value="${i.time}" onchange="updatePickup(${i.id},'time',this.value)" class="bg-white rounded-lg p-2 text-rose-600 font-bold text-xs"><input type="text" value="${i.event}" onchange="updatePickup(${i.id},'event',this.value)" class="flex-1 bg-transparent border-none text-xs"></div>`).join('');
-            document.getElementById('cars-container').innerHTML = state.carData.map(c => `<div class="bg-white border border-rose-50 p-5 rounded-[2rem] shadow-sm"><div class="flex items-center gap-2 mb-4"><button onclick="deleteCar(${c.id})" class="btn-delete text-sm">✕</button><input type="text" value="${c.info}" onchange="updateCar(${c.id},this.value)" class="font-bold text-rose-800 outline-none w-full"></div><div class="grid grid-cols-2 gap-2">${c.passengers.map((p,idx)=>`<div class="flex items-center gap-1 bg-gray-50 p-2 rounded-xl"><button onclick="deletePax(${c.id},${idx})" class="text-gray-300">×</button><input type="text" value="${p}" onchange="updatePax(${c.id},${idx},this.value)" class="bg-transparent text-[10px] w-full outline-none"></div>`).join('')}<button onclick="addPax(${c.id})" class="text-[10px] border border-dashed border-rose-200 text-rose-300 rounded-xl py-2">+ 加人</button></div></div>`).join('');
-        }
-        function renderSchedule() { document.getElementById('schedule-list').innerHTML = state.scheduleData.map(i => `<div class="flex gap-2 bg-rose-50/20 p-4 rounded-2xl items-center"><button onclick="deleteSchedule(${i.id})" class="btn-delete">✕</button><input type="time" value="${i.time}" onchange="updateSchedule(${i.id},'time',this.value)" class="bg-white rounded-lg p-2 text-rose-600 font-bold text-sm"><input type="text" value="${i.event}" onchange="updateSchedule(${i.id},'event',this.value)" class="flex-1 bg-transparent border-none text-sm font-medium"></div>`).join(''); }
-        function renderTodo() { document.getElementById('todo-list').innerHTML = state.todoData.map(i => `<div class="flex items-center gap-2 bg-white p-4 rounded-2xl border shadow-sm"><button onclick="deleteTodo(${i.id})" class="btn-delete">✕</button><input type="checkbox" ${i.done?'checked':''} onchange="toggleTodo(${i.id})" class="accent-rose-500 h-5 w-5"><input type="text" value="${i.task}" onchange="updateTodo(${i.id},this.value)" class="flex-1 outline-none text-sm ${i.done?'line-through text-gray-300':''}"></div>`).join(''); }
-        function renderDataTable() { document.getElementById('data-table-body').innerHTML = state.seatingData.map(t => `<tr class="hover:bg-rose-50/30 transition-colors"><td class="px-6 py-4" data-label="桌號">${t.isMain ? '★' : t.id}</td><td class="px-6 py-4 font-bold text-rose-800" data-label="桌名">${t.tableName}</td><td class="px-6 py-4" data-label="人數">${t.guests.filter(g=>g.trim()).length}/${t.guests.length}</td><td class="px-6 py-4 text-[10px] text-gray-400 max-w-[150px] truncate" data-label="名單">${t.guests.join(',')}</td><td class="px-6 py-4" data-label="操作"><button onclick="openEdit(${t.id})" class="text-rose-500 font-bold hover:underline">編輯</button></td></tr>`).join(''); }
     </script>
 </body>
 </html>
