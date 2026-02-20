@@ -162,7 +162,7 @@
                     <h4 class="font-bold text-rose-900 text-sm">數據管理</h4>
                     <button onclick="exportToCSV()" class="bg-green-600 text-white px-4 py-2 rounded-xl font-bold text-xs">匯出 CSV</button>
                 </div>
-                <div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50 text-[10px] text-gray-400 uppercase tracking-widest"><tr><th class="px-6 py-3">桌號</th><th class="px-6 py-3">桌名</th><th class="px-6 py-3">人數</th><th class="px-6 py-3">操作</th></tr></thead><tbody id="data-table-body" class="divide-y divide-gray-100 text-sm"></tbody></table></div>
+                <div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50 text-[10px] text-gray-400 uppercase tracking-widest"><tr><th class="px-6 py-3">桌號</th><th class="px-6 py-3">桌名</th><th class="px-6 py-3">人數</th><th class="px-6 py-3">兒童椅</th><th class="px-6 py-3">操作</th></tr></thead><tbody id="data-table-body" class="divide-y divide-gray-100 text-sm"></tbody></table></div>
             </div>
         </div>
     </main>
@@ -173,6 +173,10 @@
             <div class="flex justify-between items-start mb-6"><h3 class="text-2xl font-bold text-rose-800" id="modal-title">管理座次</h3><button onclick="closeModal()" class="text-gray-300 text-3xl">&times;</button></div>
             <div class="space-y-6">
                 <input type="text" id="edit-tableName" class="w-full p-4 bg-gray-50 border rounded-xl outline-none font-bold" placeholder="桌位名稱">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 mb-1 block">需要幾張兒童座椅？</label>
+                    <input type="number" id="edit-babySeats" class="w-full p-3 bg-gray-50 border rounded-xl outline-none font-bold text-amber-500" placeholder="0" min="0">
+                </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="guest-inputs-container"></div>
             </div>
             <div class="mt-8 flex flex-col-reverse sm:flex-row gap-3 pt-6 border-t"><button onclick="closeModal()" class="w-full py-4 text-gray-400 font-bold">取消</button><button onclick="saveTable()" class="w-full py-4 bg-rose-600 text-white rounded-2xl font-bold shadow-lg">儲存</button></div>
@@ -204,7 +208,7 @@
         let syncTimer = null;
         let db, auth;
 
-        let state = JSON.parse(localStorage.getItem('wedding_v25_state')) || {
+        let state = JSON.parse(localStorage.getItem('wedding_v26_state')) || {
             seatingData: [],
             scheduleData: [{ id: 1, time: "12:00", event: "開席儀式" }],
             pickupScheduleData: [{ id: 1, time: "08:00", event: "化妝準備" }],
@@ -231,7 +235,6 @@
                             let normals = [];
                             let reserves = [];
                             
-                            // 分類普通桌與預備桌
                             incoming.seatingData.forEach(t => {
                                 if (t.tableName.includes('預備') || t.side === 'reserve') {
                                     reserves.push(t);
@@ -240,10 +243,9 @@
                                 }
                             });
 
-                            // 如果有多個預備桌，只保留第一個
                             if (reserves.length > 0) {
                                 let mainReserve = reserves[0];
-                                mainReserve.side = 'right'; // 強制放在右邊女方
+                                mainReserve.side = 'right'; 
                                 if(mainReserve.tableName === '第 25 桌' || mainReserve.tableName.startsWith('預備')) {
                                     mainReserve.tableName = '預備桌';
                                 }
@@ -267,7 +269,7 @@
                         }
 
                         state = { ...state, ...incoming };
-                        localStorage.setItem('wedding_v25_state', JSON.stringify(state));
+                        localStorage.setItem('wedding_v26_state', JSON.stringify(state));
                         refreshUI();
                     } else {
                         initSeating();
@@ -280,7 +282,7 @@
         };
 
         const pushToCloud = async () => {
-            localStorage.setItem('wedding_v25_state', JSON.stringify(state));
+            localStorage.setItem('wedding_v26_state', JSON.stringify(state));
             if (!auth || !auth.currentUser) return;
             document.getElementById('sync-status').classList.remove('hidden');
             document.getElementById('sync-status').classList.add('flex');
@@ -293,11 +295,11 @@
 
         function initSeating() {
             if (state.seatingData.length === 0) {
-                state.seatingData.push({ id: 0, isMain: true, side: 'center', tableName: `主桌`, guests: Array(12).fill('') });
+                state.seatingData.push({ id: 0, isMain: true, side: 'center', tableName: `主桌`, guests: Array(12).fill(''), babySeats: 0 });
                 for (let i = 1; i <= 24; i++) {
-                    state.seatingData.push({ id: i, isMain: false, side: i <= 12 ? 'left' : 'right', tableName: `第 ${i} 桌`, guests: Array(10).fill('') });
+                    state.seatingData.push({ id: i, isMain: false, side: i <= 12 ? 'left' : 'right', tableName: `第 ${i} 桌`, guests: Array(10).fill(''), babySeats: 0 });
                 }
-                state.seatingData.push({ id: 25, isMain: false, side: 'right', tableName: `預備桌`, guests: Array(10).fill('') });
+                state.seatingData.push({ id: 25, isMain: false, side: 'right', tableName: `預備桌`, guests: Array(10).fill(''), babySeats: 0 });
             }
         }
 
@@ -312,11 +314,13 @@
             if (dragSourceId && dragSourceId !== targetId) {
                 const sIdx = state.seatingData.findIndex(t => t.id == dragSourceId);
                 const tIdx = state.seatingData.findIndex(t => t.id == targetId);
-                const sName = state.seatingData[sIdx].tableName, sGuests = [...state.seatingData[sIdx].guests];
+                const sName = state.seatingData[sIdx].tableName, sGuests = [...state.seatingData[sIdx].guests], sBaby = state.seatingData[sIdx].babySeats;
                 state.seatingData[sIdx].tableName = state.seatingData[tIdx].tableName;
                 state.seatingData[sIdx].guests = [...state.seatingData[tIdx].guests];
+                state.seatingData[sIdx].babySeats = state.seatingData[tIdx].babySeats;
                 state.seatingData[tIdx].tableName = sName;
                 state.seatingData[tIdx].guests = sGuests;
+                state.seatingData[tIdx].babySeats = sBaby;
                 refreshUI(); debouncedPush();
             }
         }
@@ -386,8 +390,12 @@
             const rightInner = document.getElementById('right-inner');
             const rightOuter = document.getElementById('right-outer');
             
-            main.innerHTML = leftInner.innerHTML = leftOuter.innerHTML = rightInner.innerHTML = rightOuter.innerHTML = '';
-            
+            if(main) main.innerHTML = '';
+            if(leftInner) leftInner.innerHTML = '';
+            if(leftOuter) leftOuter.innerHTML = '';
+            if(rightInner) rightInner.innerHTML = '';
+            if(rightOuter) rightOuter.innerHTML = '';
+
             const createDot = (t) => {
                 const filled = t.guests.filter(g => g.trim()).length;
                 let bg = 'bg-gray-50 text-gray-400 border';
@@ -396,44 +404,48 @@
                 else if (filled > 0) bg = 'bg-rose-400 text-white shadow-sm';
                 
                 const dot = document.createElement('div');
-                dot.className = `table-dot flex flex-col items-center`;
+                dot.className = `table-dot flex flex-col items-center relative`;
                 dot.draggable = true; dot.dataset.id = t.id;
                 dot.addEventListener('dragstart', handleDragStart);
                 dot.addEventListener('dragover', handleDragOver);
                 dot.addEventListener('dragleave', handleDragLeave);
                 dot.addEventListener('drop', handleDrop);
                 dot.onclick = () => openEdit(t.id);
-                // 圓形圖放大：普通桌 w-24/28，主桌 w-32/40
-                dot.innerHTML = `<div class="${t.isMain ? 'w-32 md:w-40 h-32 md:h-40' : 'w-24 md:w-28 h-24 md:h-28'} rounded-full flex items-center justify-center p-2 shadow-md mb-3 transition-transform duration-300 ${bg}"><div class="table-label-container"><div class="table-label-text border-b border-white/30 pb-1 mb-1">${t.tableName}</div><div class="text-[10px] md:text-[12px] opacity-90 font-medium tracking-wide">${filled}/${t.guests.length}</div></div></div>`;
+
+                const babyBadge = (t.babySeats && t.babySeats > 0) ? `<div class="absolute -top-2 -right-2 bg-amber-400 text-white text-[10px] md:text-xs rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center font-bold shadow-md z-10 border-2 border-white" title="兒童座椅需求">👶${t.babySeats}</div>` : '';
+                
+                // 放大的圓圈尺寸
+                dot.innerHTML = `${babyBadge}<div class="${t.isMain ? 'w-32 md:w-40 h-32 md:h-40' : 'w-24 md:w-28 h-24 md:h-28'} rounded-full flex flex-col items-center justify-center p-2 shadow-md mb-3 transition-transform duration-300 ${bg}"><div class="table-label-container"><div class="table-label-text border-b border-white/30 pb-1 mb-1">${t.tableName}</div><div class="text-[10px] md:text-[13px] opacity-90 font-medium tracking-wide">${filled}/${t.guests.length}</div></div></div>`;
                 return dot;
             };
 
             const leftTables = state.seatingData.filter(t => !t.isMain && t.side === 'left');
-            const rightTables = state.seatingData.filter(t => !t.isMain && t.side === 'right');
+            const rightTables = state.seatingData.filter(t => !t.isMain && (t.side === 'right' || t.side === 'reserve'));
             const mainTable = state.seatingData.find(t => t.isMain);
 
-            if (mainTable) main.appendChild(createDot(mainTable));
+            if (mainTable && main) main.appendChild(createDot(mainTable));
 
-            // 左側分配：前 6 桌排走道側(inner)，後面的排外側(outer)
-            leftTables.forEach((t, i) => {
-                if (i < 6) leftInner.appendChild(createDot(t));
-                else leftOuter.appendChild(createDot(t));
-            });
+            if (leftInner && leftOuter) {
+                leftTables.forEach((t, i) => {
+                    if (i < 6) leftInner.appendChild(createDot(t));
+                    else leftOuter.appendChild(createDot(t));
+                });
+            }
 
-            // 確保預備桌排在 rightTables 的最後面
-            rightTables.sort((a, b) => {
-                const aRes = a.tableName.includes('預備');
-                const bRes = b.tableName.includes('預備');
-                if (aRes && !bRes) return 1;
-                if (!aRes && bRes) return -1;
-                return 0;
-            });
-
-            // 右側分配：前 6 桌排走道側(inner)，後面的排外側(outer)
-            rightTables.forEach((t, i) => {
-                if (i < 6) rightInner.appendChild(createDot(t));
-                else rightOuter.appendChild(createDot(t));
-            });
+            if (rightInner && rightOuter) {
+                // Ensure reserve is at the end
+                rightTables.sort((a, b) => {
+                    const aRes = a.tableName.includes('預備') || a.side === 'reserve';
+                    const bRes = b.tableName.includes('預備') || b.side === 'reserve';
+                    if (aRes && !bRes) return 1;
+                    if (!aRes && bRes) return -1;
+                    return 0;
+                });
+                rightTables.forEach((t, i) => {
+                    if (i < 6) rightInner.appendChild(createDot(t));
+                    else rightOuter.appendChild(createDot(t));
+                });
+            }
         }
 
         function renderPickup() {
@@ -502,11 +514,24 @@
             document.getElementById('music-lists-container').innerHTML = cats.map((k, idx) => `<div class="bg-white rounded-3xl shadow-lg border border-rose-50 overflow-hidden"><div class="p-4 bg-rose-50 border-b flex justify-between items-center"><h3 class="font-bold text-rose-800 text-sm">${names[idx]}</h3><button onclick="addMusicItem('${k}')" class="text-[10px] bg-rose-500 text-white px-2 py-1 rounded-lg">加曲</button></div><div class="p-4 space-y-2">${state.musicData[k].map((s, sIdx) => `<div class="bg-rose-50/50 p-2 rounded-xl flex items-center gap-2"><div class="flex flex-col"><button onclick="moveMusic('${k}',${sIdx},'up')" class="btn-order text-[10px]">▲</button><button onclick="moveMusic('${k}',${sIdx},'down')" class="btn-order text-[10px]">▼</button></div><button onclick="deleteMusic('${k}',${s.id})" class="btn-delete text-xs">✕</button><input type="text" value="${s.name}" onchange="updateMusic('${k}',${s.id},'name',this.value)" class="flex-1 bg-transparent text-[10px] outline-none"></div>`).join('')}</div></div>`).join('');
         }
         window.moveMusic = (k, idx, dir) => { const arr = state.musicData[k]; const nIdx = dir === 'up' ? idx - 1 : idx + 1; if(nIdx < 0 || nIdx >= arr.length) return; [arr[idx], arr[nIdx]] = [arr[nIdx], arr[idx]]; refreshUI(); debouncedPush(); };
-        function renderDataTable() { document.getElementById('data-table-body').innerHTML = state.seatingData.map(t => `<tr class="hover:bg-rose-50/30 transition-colors"><td class="px-6 py-4">${t.isMain ? '★' : t.id}</td><td class="px-6 py-4 font-bold text-rose-800">${t.tableName}</td><td class="px-6 py-4">${t.guests.filter(g=>g.trim()).length}/${t.guests.length}</td><td class="px-6 py-4"><button onclick="openEdit(${t.id})" class="text-rose-500 font-bold hover:underline">編輯</button></td></tr>`).join(''); }
+        function renderDataTable() { document.getElementById('data-table-body').innerHTML = state.seatingData.map(t => `<tr class="hover:bg-rose-50/30 transition-colors"><td class="px-6 py-4">${t.isMain ? '★' : t.id}</td><td class="px-6 py-4 font-bold text-rose-800">${t.tableName}</td><td class="px-6 py-4">${t.guests.filter(g=>g.trim()).length}/${t.guests.length}</td><td class="px-6 py-4 text-amber-500 font-bold">${t.babySeats || 0}</td><td class="px-6 py-4"><button onclick="openEdit(${t.id})" class="text-rose-500 font-bold hover:underline">編輯</button></td></tr>`).join(''); }
         let curId = null;
-        window.openEdit = (id) => { curId = id; const t = state.seatingData.find(x => x.id === id); document.getElementById('modal-title').innerText = `${t.tableName}`; document.getElementById('edit-tableName').value = t.tableName; document.getElementById('guest-inputs-container').innerHTML = t.guests.map((name, i) => `<div class="relative"><span class="absolute left-4 top-4 text-[9px] text-gray-300 font-bold">${i+1}</span><input type="text" class="guest-input w-full p-4 pl-9 bg-gray-50 border rounded-xl text-xs font-medium" value="${name}"></div>`).join(''); document.getElementById('modal').classList.remove('hidden'); };
+        window.openEdit = (id) => { 
+            curId = id; const t = state.seatingData.find(x => x.id === id); 
+            document.getElementById('modal-title').innerText = `${t.tableName}`; 
+            document.getElementById('edit-tableName').value = t.tableName; 
+            document.getElementById('edit-babySeats').value = t.babySeats || 0;
+            document.getElementById('guest-inputs-container').innerHTML = t.guests.map((name, i) => `<div class="relative"><span class="absolute left-4 top-4 text-[9px] text-gray-300 font-bold">${i+1}</span><input type="text" class="guest-input w-full p-4 pl-9 bg-gray-50 border rounded-xl text-xs font-medium" value="${name}"></div>`).join(''); 
+            document.getElementById('modal').classList.remove('hidden'); 
+        };
         window.closeModal = () => document.getElementById('modal').classList.add('hidden');
-        window.saveTable = () => { const idx = state.seatingData.findIndex(x => x.id === curId); state.seatingData[idx].tableName = document.getElementById('edit-tableName').value; state.seatingData[idx].guests = Array.from(document.querySelectorAll('.guest-input')).map(i => i.value.trim()); closeModal(); refreshUI(); debouncedPush(); };
+        window.saveTable = () => { 
+            const idx = state.seatingData.findIndex(x => x.id === curId); 
+            state.seatingData[idx].tableName = document.getElementById('edit-tableName').value; 
+            state.seatingData[idx].babySeats = parseInt(document.getElementById('edit-babySeats').value) || 0;
+            state.seatingData[idx].guests = Array.from(document.querySelectorAll('.guest-input')).map(i => i.value.trim()); 
+            closeModal(); refreshUI(); debouncedPush(); 
+        };
 
         window.exportLayoutToPNG = () => { setTimeout(() => { html2canvas(document.getElementById('inner-capture'), { scale: 3, backgroundColor: "#ffffff", width: document.getElementById('inner-capture').scrollWidth }).then(canvas => { const link = document.createElement('a'); link.href = canvas.toDataURL('image/png', 1.0); link.download = '場地佈置圖.png'; link.click(); }); }, 500); };
         window.exportToCSV = () => { let csv = "\uFEFFID,桌名,名單\n" + state.seatingData.map(t => `"${t.id}","${t.tableName}","${t.guests.join(',')}"`).join("\n"); const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); link.download = `wedding_backup.csv`; link.click(); };
@@ -528,9 +553,6 @@
         window.addScheduleRow = () => { state.scheduleData.push({ id: Date.now(), time: "12:00", event: "" }); refreshUI(); debouncedPush(); };
         window.deleteSchedule = (id) => { state.scheduleData = state.scheduleData.filter(x=>x.id!==id); refreshUI(); debouncedPush(); };
         window.updateSchedule = (id,f,v) => { const i = state.scheduleData.find(x=>x.id===id); if(i){i[f]=v; debouncedPush();} };
-        window.addMusicItem = (k) => { state.musicData[k].push({ id: Date.now(), name: "", order: state.musicData[k].length+1 }); refreshUI(); debouncedPush(); };
-        window.deleteMusic = (k,id) => { state.musicData[k] = state.musicData[k].filter(x=>x.id!==id); refreshUI(); debouncedPush(); };
-        window.updateMusic = (k,id,f,v) => { const s = state.musicData[k].find(x=>x.id===id); if(s){s[f]=v; debouncedPush();} };
     </script>
 </body>
 </html>
